@@ -959,7 +959,10 @@ Sources.JavaScriptSourceFrame = class extends Sources.UISourceCodeFrame {
         const value = valuesMap.get(name);
         const propertyCount = value.preview ? value.preview.properties.length : 0;
         const entryCount = value.preview && value.preview.entries ? value.preview.entries.length : 0;
-        if (value.preview && propertyCount + entryCount < 10) {
+        if (value.customPreview() && propertyCount + entryCount < 10) {
+          var customValueEl = (new ObjectUI.CustomPreviewComponent(value)).element;
+          nameValuePair.appendChild(customValueEl);
+        } else if (value.preview && propertyCount + entryCount < 10) {
           formatter.appendObjectPreview(nameValuePair, value.preview, false /* isEntry */);
         } else {
           nameValuePair.appendChild(ObjectUI.ObjectPropertiesSection.createValueElement(
