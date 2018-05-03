@@ -218,7 +218,7 @@
             "title": "Enable custom formatters",
             "settingName": "customFormatters",
             "settingType": "boolean",
-            "defaultValue": false
+            "defaultValue": true
         },
         {
             "type": "setting",
