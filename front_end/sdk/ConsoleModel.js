@@ -122,7 +122,187 @@ SDK.ConsoleModel = class extends Common.Object {
    * @param {boolean} awaitPromise
    */
   async evaluateCommandInConsole(executionContext, originatingMessage, expression, useCommandLineAPI, awaitPromise) {
-    const result = await executionContext.evaluate(
+
+    // Crudely split a Dart expression into a receiver and the rest,
+    // assuming a dot or indexing expression. If neither occurs, it's
+    // a simple expression, and just return it as a string.
+    //
+    // So this will work for e.g. this.someMap['a'].isEven
+    function split(expr) {
+       // This is duplicating work we already do in the helper
+       // functions, but we do it here because we need to split off
+       // and evaluate the initial receiver before passing it in. We
+       // should be able to do something better. Distinguishing the
+       // cases by return type is also ugly.
+       let dotIndex = expr.indexOf('.');
+       let bracketIndex = expr.indexOf('[');
+       var index;
+       if (dotIndex < 0 && bracketIndex < 0) return expr;
+       if (dotIndex < 0) {
+          index = bracketIndex;
+       } else if (bracketIndex < 0) {
+         index = dotIndex;
+       } else {
+         index = Math.min(dotIndex, bracketIndex);
+       }
+       let prefix = expr.substring(0, index);
+       let suffix = expr.substring(index + 1);
+       return [prefix, suffix];
+    }
+
+/// Because it's difficult to get a script loaded into the user page, inline the
+/// whole contents of user_page_scripts.js from the extension here and evaluate it
+/// every time before we evaluate an expression.
+// TODO(alanknight): Don't do this.
+let ridiculousInline = `/// Scripts that we need to be present in the user's page.
+///
+/// This includes a simple evaluation of dotted expressions as well as
+/// functions to return DDC paths and module information.
+
+(function() {
+
+var bracketMatcher = /\\\[/g;
+var endBracketMatcher = /\\\]/g;
+
+// Find all matches for a regex.
+//
+// Helper for $dartEvaluateExpression.
+function matchesFor(string, regex) {
+  var result = [];
+  while ((match = regex.exec(string)) != null) {
+    result.push(match.index);
+  }
+  return result;
+}
+
+/// Split a simple expression into a field access part and any indexed
+/// parts.
+///
+/// For example, 'foo[1][\"key\"]' -> ['foo', '[1]', '[\"key\"]'].
+/// If no indexed parts are found, just returns a list with the input.
+function splitIndexed(expression) {
+  var result = [];
+  var brackets = matchesFor(expression, bracketMatcher);
+  var endBrackets = matchesFor(expression, endBracketMatcher);
+  // If it doesn't look like there's a valid index expression, just
+  // return the input.
+  if (brackets.length == 0) return [expression];
+  if (brackets.length != endBrackets.length) return [expression];
+
+  // If there's a field access part at the beginning, include it.
+  var beginning = expression.substring(0, brackets[0]);
+  if (beginning) result.push(beginning);
+  // Loop over any index expressions and add them.
+  for (var i = 0; i < brackets.length; i++) {
+    result.push(expression.substring(brackets[0], endBrackets[0] + 1));
+  }
+  return result;
+}
+
+
+/// Evaluate simple Dart expression, consisting of dotted field or
+/// method references and indexing expressions. For example
+///      $dartEvaluateExpression(this, "foo.bar[3].qux");
+///
+/// Parameters:
+/// object - The initial receiver
+/// path - (String) The chain of field/index operations.
+/// objectName - (String) The name by of the original
+///   receiver. Optional, used to provide a better error message.
+window.$dartEvaluateExpression = function(object, path, objectName, evaluationFunction) {
+  var dart = dart_library.import('dart_sdk').dart;
+
+  // Split by dots, and then further split any that have indexing
+  // expressions.
+  var components = path.split('.');
+  // TODO(alanknight): This means that floating point numbers, or
+  // strings with periods in them won't work. But we may be able to
+  // get by with that until we can just compile them properly as Dart
+  // expressions.
+  var newComponents = [];
+  for (var i = 0; i < components.length; i++) {
+    newComponents = newComponents.concat(splitIndexed(components[i]));
+  }
+  components = newComponents;
+
+  var result = object;
+  for (var i = 0; i < components.length; i++) {
+    // If we get to null/undefined, stop trying to evaluate and return
+    // an error message indicating where the null occurred.
+    if (result == null) {
+      var description = objectName == null ? 'Initial receiver' : objectName;
+      var previous = i == 0 ? description : components[i - 1];
+      return 'Error - "' + previous + '" is null';
+    }
+    var member = components[i];
+    if (member.startsWith('[') && member.endsWith(']')) {
+      // Treat this as an indexing operation. We eval the part inside
+      // []. So [0] will index the number 0, [\"name\"] will index by
+      // the string \"name\". Simple expressions of those will work,
+      // e.g. 2+3.  JavaScript-visible variables will also get found,
+      // but we're not admitting that.
+      var indexString = member.substring(1, member.length - 1);
+      var indexer = eval(indexString);
+      if (null == indexer) {
+        return 'Error' // 'Variable \'' + indexString +
+//            '\' cannot be used in this limited subset of Dart expressions';
+      }
+      result = dart.dindex(result, indexer);
+    } else {
+      result = dart.dloadRepl(result, member);
+    }
+  }
+  return result;
+};
+
+if (typeof $d == 'undefined') {
+  window.$d = window.$dartEvaluateExpression;
+}
+
+/// Return a JSON format of $dartLoader, which gives us the root URL
+/// and has maps between module ids and their URLs.
+window.$dartLoaderJson = function() {
+  // Jump through hoops to send a nested Map through JSON.
+  // TODO(alanknight): There must be a better way to do this.
+
+  // We only send one direction of the mapping, the other can be
+  // derived if we need it.
+  return JSON.stringify({
+    rootDirectories: $dartLoader.rootDirectories,
+    moduleIdToUrl: [...$dartLoader.moduleIdToUrl]
+  });
+}
+})();
+`;
+
+    var result;
+    // If an expression starts with a leading space, treat it as JavaScript
+    // TODO(alanknight): A much better mechanism.
+    let decomposed = split(expression);
+    if (!expression.startsWith(' ') && typeof decomposed !== 'string') {
+     const installUserScriptsEverySingleTime = await executionContext.evaluate(
+        {
+          expression: ridiculousInline,
+          objectGroup: 'console',
+          includeCommandLineAPI: useCommandLineAPI,
+          silent: false,
+          returnByValue: false,
+          generatePreview: true
+        },
+        true, awaitPromise);
+
+     result = await executionContext.evaluate(
+        {
+          expression: 'window.$d(' + decomposed[0] + ',"' + decomposed[1] + '")',
+          objectGroup: 'console',
+          includeCommandLineAPI: useCommandLineAPI,
+          silent: false,
+          returnByValue: false,
+          generatePreview: true
+        },
+        /* userGesture */ true, awaitPromise);
+    } else {
+      result = await executionContext.evaluate(
         {
           expression: expression,
           objectGroup: 'console',
@@ -132,9 +312,8 @@ SDK.ConsoleModel = class extends Common.Object {
           generatePreview: true
         },
         /* userGesture */ true, awaitPromise);
+    }
     Host.userMetrics.actionTaken(Host.UserMetrics.Action.ConsoleEvaluated);
-    if (result.error)
-      return;
     await Common.console.showPromise();
     this.dispatchEventToListeners(
         SDK.ConsoleModel.Events.CommandEvaluated,
