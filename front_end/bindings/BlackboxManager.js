@@ -28,6 +28,22 @@ Bindings.BlackboxManager = class {
     this._isBlackboxedURLCache = new Map();
 
     SDK.targetManager.observeModels(SDK.DebuggerModel, this);
+
+    // Initialize Dart patterns.
+    const regexPatterns = Common.moduleSetting('skipStackFramesPattern').getAsArray();
+    const oldPatterns = regexPatterns.map((p) => p.pattern);
+    const dartPatterns = [
+      '\/dart_sdk\.js\\b',
+      '\/ng_zone\.dart$',
+      '\/stack_zone_specification\.dart$',
+    ];
+    for (let i = 0; i < dartPatterns.length; ++i) {
+      const dartPattern = dartPatterns[i];
+      if (oldPatterns.indexOf(dartPattern) == -1) {
+        regexPatterns.push({ pattern: dartPattern});
+      }
+    }
+    Common.moduleSetting('skipStackFramesPattern').setAsArray(regexPatterns);
   }
 
   /**
