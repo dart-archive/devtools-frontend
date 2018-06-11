@@ -307,7 +307,8 @@
         "PerformanceMetricsModel.js",
         "../SupportedCSSProperties.js",
         "FilmStripModel.js",
-        "ConsoleModel.js"
+        "ConsoleModel.js",
+        "DartSupport.js"
     ],
     "skip_compilation": [
         "../SupportedCSSProperties.js"
