@@ -55,11 +55,33 @@ window.$dartExpressionFor = function(executionContext, dartExpression) {
   expression += "debugger;";
   expression += "const dart = dart_library.import('dart_sdk').dart;\n";
   name = receiver;
-  expression += 'var jsScopeName = ' + lookupInJSScope + '("' + receiver + '");\n';
-  expression += 'var thisScopeName = ' + lookupInThis + '(__this,"' + receiver + '");\n';
-  expression += 'var receiverObject;\n';
+  expression += ' function lookup(name) {';
+  expression += 'let jsScopeName = ' + lookupInJSScope + '("' + receiver + '");\n';
+  expression += 'let thisScopeName = ' + lookupInThis + '(__this,"' + receiver + '");\n';
+  expression += 'let receiverObject;\n';
   expression += "if (thisScopeName) receiverObject = dart.dloadRepl(__this, thisScopeName);\n";
-  expression += "var result = receiverObject || eval(jsScopeName || receiver);\n";
+  expression += "let result = receiverObject || eval(jsScopeName || receiver);\n";
+  expression += 'return result;}';
+  expression += 'let initial = lookup(receiver);';
+  expression += `var handler = {"get": function(target, prop) {
+       console.log("getting " + prop + "from " + target);
+       let placeholder = {};
+       let result = placeholder;
+       console.log("indexing");
+       try { result = dart.dindex(target, prop);} catch(e) { console.log(e);};
+       console.log("indexed result 1 == " + result);
+       if (result === placeholder) {
+         try { result = dart.dindex(target, parseInt(prop));} catch(e) {console.log(e)};
+       }
+       console.log("indexed result == " + result);
+       console.log("vs. placeholder " + (result === placeholder));
+       if (result === placeholder) result = dart.dloadRepl(target, prop);
+       if (typeof result == 'object') {
+         return new Proxy(result, handler);}
+       else {
+         return result;}
+       }};`;
+  expression += 'let proxy = new Proxy(initial, handler)\n';
   for (let getter of components) {
     expression += 'result = dart.dloadRepl(result, "' + getter + '");';;
   }

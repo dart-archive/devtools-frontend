@@ -1,0 +1,19 @@
+name: devtools_frontend_dart
+description: Tests and Dart support code for the devtools_frontend fork
+version: 0.0.0
+homepage: https://www.dartlang.org
+author: Your Name <email@example.com>
+
+environment:
+  sdk: '>=2.0.0-dev.55.0 <2.1.0'
+
+#dependencies:
+#  path: ^1.4.1
+
+dev_dependencies:
+  path: 1.5.1 # Because path 1.6.0 won't run on bleeding edge: uses retype
+  build_runner: ^0.8.7
+  build_web_compilers: ^0.4.0
+  build_test: any
+  test: any
+  js: any

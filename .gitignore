@@ -17,3 +17,8 @@ npm-debug.log
 /scripts/visualize_deps/out
 /front_end/protocol_externs.js
 package-lock.json
+# Dart-specific stuff
+# Don’t commit the following directories created by pub.
+.dart_tool
+.packages
+pubspec.lock
