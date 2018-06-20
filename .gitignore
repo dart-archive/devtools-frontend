@@ -17,3 +17,7 @@ npm-debug.log
 /scripts/visualize_deps/out
 /front_end/protocol_externs.js
 package-lock.json
+# Dart-specific stuff
+.dart_tool
+.packages
+pubspec.lock
