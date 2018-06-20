@@ -46,6 +46,8 @@ ${lookupInThis}
   if (window.dart_library) {
     dart = dart_library.import('dart_sdk').dart;
   } else {
+    // Require is asynchronous, but this seems to work, and
+    // we know dart_sdk will always be present.
     dart = requirejs('dart_sdk').dart;
   }
   var name = "${receiver}";
