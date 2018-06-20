@@ -28,7 +28,7 @@ main() async {
 init() async {
     var element = new ScriptElement()
       ..type = 'text/javascript'
-      ..src = '../sdk/DartSupport.js';
+      ..src = '../lib/sdk/DartSupport.js';
     document.body.append(element);
     await element.onLoad.take(1).drain();
 }
