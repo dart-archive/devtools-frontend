@@ -5,3 +5,4 @@ targets:
       - scripts/**
       - services/**
       - test/**
+      - lib/**
