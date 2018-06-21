@@ -1,0 +1,7 @@
+targets:
+  $default:
+    sources:
+      - front_end/**
+      - scripts/**
+      - services/**
+      - test/**
