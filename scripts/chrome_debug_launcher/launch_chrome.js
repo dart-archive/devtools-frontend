@@ -26,7 +26,7 @@ if (utils.includes(process.argv, Flags.RESET_PROFILE)) {
 
 var chromeArgs = [
   `--remote-debugging-port=${REMOTE_DEBUGGING_PORT}`,
-  `--custom-devtools-frontend=http://localhost:${SERVER_PORT}/front_end/`, `--no-first-run`,
+  `--custom-devtools-frontend=http://127.0.0.1:${SERVER_PORT}/front_end/`, `--no-first-run`,
   '--enable-devtools-experiments', `--user-data-dir=${CHROME_PROFILE_PATH}`
 ].concat(process.argv.slice(2));
 
