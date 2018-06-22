@@ -15,17 +15,16 @@ import 'dart:html';
 external String $dartExpressionFor(context, String expression);
 
 main() async {
-  await init();
 
-  test("Doesn't look like Dart", () {
-    expect($dartExpressionFor(null, 'a/&*'), 'a/&*');
-  });
-}
-
-init() async {
+  setUp(() async {
   var element = new ScriptElement()
     ..type = 'text/javascript'
     ..src = '/packages/devtools_frontend_dart/sdk/DartSupport.js';
   document.body.append(element);
-  await element.onLoad.take(1).drain();
+  await element.onLoad.take(1);
+  });
+
+  test("Doesn't look like Dart", () {
+    expect($dartExpressionFor(null, 'a/&*'), 'a/&*');
+  });
 }
