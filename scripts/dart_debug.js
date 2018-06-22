@@ -7,7 +7,7 @@ var path = require('path');
 var cdp = require('chrome-remote-interface');
 
 var server = childProcess.fork(path.join(__dirname, 'hosted_mode/server.js'));
-var chrome = childProcess.fork(path.join(__dirname, 'chrome_debug_launcher/launch_chrome.js'), ['go/ddc', 'api.dartlang.org/dev']);
+var chrome = childProcess.fork(path.join(__dirname, 'chrome_debug_launcher/launch_chrome.js'), ['api.dartlang.org/dev']);
 
 chrome.on('exit', function() {
   server.kill();

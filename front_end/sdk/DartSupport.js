@@ -1,31 +1,13 @@
 (function() {
-window.$dartEvaluateExpression = function(object, path) {
-  var dart = dart_library.import('dart_sdk').dart;
-
-  var components = path.split('.');
-  var result = object;
-
-  for (var i = 0; i < components.length; i++) {
-    var member = components[i];
-
-    result = dart.dloadRepl(result, member);
-  }
-  return result;
-};
-
-if (typeof $d == 'undefined') {
-  window.$d = window.$dartEvaluateExpression;
-}
-
-var lookupInJSScope = `(function(name) {
+var lookupInJSScope = `function lookupInJsScope(name) {
   try {
     if (name != window[name] || !(name in window)) {
       return name;
     }
   } catch(e) {}
-})`;
+}`;
 
-var lookupInThis = `(function(__this, name) {
+var lookupInThis = `function lookupInThis(__this, name) {
   var found = false;
   let type = dart.getReifiedType(__this) == "NativeJavaScriptObject"
       ? null : dart.getType(__this);
@@ -36,7 +18,7 @@ var lookupInThis = `(function(__this, name) {
     }
   });
   if (found) return name;
-})`;
+};`;
 
 window.$dartExpressionFor = function(executionContext, dartExpression) {
   var components = dartExpression.split('.');
@@ -44,10 +26,13 @@ window.$dartExpressionFor = function(executionContext, dartExpression) {
   // A crude check if all of our components look like valid Dart
   // identifiers.  If any of them fail, just return the original
   // expression and let it be evaluated as Javascript;
-
   var looksLikeIdentifier = /^[_\$a-zA-Z0-9]*$/g;
   for (let component of components) {
-    if (!looksLikeIdentifier.exec(component)) return dartExpression;
+    if (!component.match(looksLikeIdentifier)) {
+      return `console.log("%c(Cannot evaluate as a Dart expression, using JS eval)",
+          "background-color: hsl(50, 100%, 95%)");
+      ${dartExpression};`;
+    }
   }
   var receiver = components[0];
   components.shift();
@@ -83,10 +68,9 @@ window.$dartExpressionFor = function(executionContext, dartExpression) {
        }};`;
   expression += 'let proxy = new Proxy(initial, handler)\n';
   for (let getter of components) {
-    expression += 'result = dart.dloadRepl(result, "' + getter + '");';;
+    expression += `result = dart.dloadRepl(result, "${getter}");\n`
   }
   expression += 'return result;})(this)';
-//  console.log("Converted Dart expression to:\n" + expression);
   return expression;
 }
 
