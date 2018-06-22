@@ -15,11 +15,11 @@ void main(List<String> args) {
   var ddt = new File(Platform.script.path);
   var ddtDir = ddt.parent;
   var resolved = dir.uri.resolve(url);
-  
-  Process.run('npm', ['start', '$resolved'], workingDirectory: ddtDir.path).then((r) {
-    if (r.exitCode != 0) {
-      print(r.stderr);
-    }
+
+  Process
+      .start('npm', ['start', '$resolved'], workingDirectory: ddtDir.path)
+      .then((process) {
+    stdout.addStream(process.stdout);
+    stderr.addStream(process.stderr);
   });
 }
-
