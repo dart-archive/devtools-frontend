@@ -1,22 +1,4 @@
 (function() {
-window.$dartEvaluateExpression = function(object, path) {
-  var dart = dart_library.import('dart_sdk').dart;
-
-  var components = path.split('.');
-  var result = object;
-
-  for (var i = 0; i < components.length; i++) {
-    var member = components[i];
-
-    result = dart.dloadRepl(result, member);
-  }
-  return result;
-};
-
-if (typeof $d == 'undefined') {
-  window.$d = window.$dartEvaluateExpression;
-}
-
 var lookupInJSScope = `function lookupInJsScope(name) {
   try {
     if (name != window[name] || !(name in window)) {
@@ -48,7 +30,7 @@ window.$dartExpressionFor = function(executionContext, dartExpression) {
   for (let component of components) {
     if (!component.match(looksLikeIdentifier)) {
       return `console.log("%c(Cannot evaluate as a Dart expression, using JS eval)",
-          "background-color: hsl(50, 100%, 95%)")
+          "background-color: hsl(50, 100%, 95%)");
       ${dartExpression};`;
     }
   }
@@ -60,7 +42,14 @@ window.$dartExpressionFor = function(executionContext, dartExpression) {
 ${lookupInJSScope}
 ${lookupInThis}
 
-  const dart = dart_library.import('dart_sdk').dart;
+  var dart;
+  if (window.dart_library) {
+    dart = dart_library.import('dart_sdk').dart;
+  } else {
+    // Require is asynchronous, but this seems to work, and
+    // we know dart_sdk will always be present.
+    dart = requirejs('dart_sdk').dart;
+  }
   var name = "${receiver}";
   var jsScopeName = lookupInJsScope(name);
   var thisScopeName = lookupInThis(__this,name);
