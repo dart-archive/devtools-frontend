@@ -12,7 +12,7 @@ environment:
 
 dev_dependencies:
   path: 1.5.1 # Because path 1.6.0 won't run on bleeding edge: uses retype
-  build_runner: ^0.8.7
+  build_runner: ^0.9.0
   build_web_compilers: ^0.4.0
   build_test: any
   test: any

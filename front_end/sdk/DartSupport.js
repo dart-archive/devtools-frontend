@@ -30,8 +30,8 @@ window.$dartExpressionFor = function(executionContext, dartExpression) {
   for (let component of components) {
     if (!component.match(looksLikeIdentifier)) {
       return `console.log("%c(Cannot evaluate as a Dart expression, using JS eval)",
-          "background-color: hsl(50, 100%, 95%)");
-      ${dartExpression};`;
+    "background-color: hsl(50, 100%, 95%)");
+${dartExpression}`;
     }
   }
   var receiver = components[0];
