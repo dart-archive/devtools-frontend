@@ -18,7 +18,7 @@ var lookupInThis = `function lookupInThis(__this, name) {
     }
   });
   if (found) return name;
-};`;
+}`;
 
 window.$dartExpressionFor = function(executionContext, dartExpression) {
   var components = dartExpression.split('.');
@@ -36,19 +36,36 @@ ${dartExpression}`;
   }
   var receiver = components[0];
   components.shift();
-  var expression = '(function(__this) {\n';
-  expression += "debugger;";
-  expression += "const dart = dart_library.import('dart_sdk').dart;\n";
-  name = receiver;
-  expression += ' function lookup(name) {';
-  expression += 'let jsScopeName = ' + lookupInJSScope + '("' + receiver + '");\n';
-  expression += 'let thisScopeName = ' + lookupInThis + '(__this,"' + receiver + '");\n';
-  expression += 'let receiverObject;\n';
-  expression += "if (thisScopeName) receiverObject = dart.dloadRepl(__this, thisScopeName);\n";
-  expression += "let result = receiverObject || eval(jsScopeName || receiver);\n";
-  expression += 'return result;}';
-  expression += 'let initial = lookup(receiver);';
-  expression += `var handler = {"get": function(target, prop) {
+  var expression = `(function(__this) {
+    debugger;
+  // TODO: These should probably be helper functions in the DDC runtime.
+${lookupInJSScope}
+${lookupInThis}
+
+  var dart;
+  if (window.dart_library) {
+    dart = dart_library.import('dart_sdk').dart;
+  } else {
+    // Require is asynchronous, but this seems to work, and
+    // we know dart_sdk will always be present.
+    dart = requirejs('dart_sdk').dart;
+  }
+  var name = "${receiver}";
+  function lookup(name) {
+    let jsScopeName = lookupInJsScope(name);
+    let thisScopeName = lookupInThis(__this,name);
+    var receiverObject;
+    if (thisScopeName) {
+      receiverObject = dart.dloadRepl(__this, thisScopeName);
+      // What if the receiver is correctly null?
+      if (receiverObject) return receiverObject;
+    }
+    try {
+      return eval(jsScopeName || receiver);
+    } catch (error) {}
+  }
+  let initial = lookup('${receiver}');
+  var handler = {"get": function(target, prop) {
        console.log("getting " + prop + "from " + target);
        let placeholder = {};
        let result = placeholder;
@@ -65,10 +82,14 @@ ${dartExpression}`;
          return new Proxy(result, handler);}
        else {
          return result;}
-       }};`;
-  expression += 'let proxy = new Proxy(initial, handler)\n';
+       }};
+  if (typeof initial == 'object') {
+    let proxy = new Proxy(initial, handler);
+ /// Wait a minute, what do you want to do here with the proxy??
+    eval('(function(arg) { arg.' + components.join('.');})
+`;
   for (let getter of components) {
-    expression += `result = dart.dloadRepl(result, "${getter}");\n`
+   expression += `result = dart.dloadRepl(result, "${getter}");\n`
   }
   expression += 'return result;})(this)';
   return expression;
