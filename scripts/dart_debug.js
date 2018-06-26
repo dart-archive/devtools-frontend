@@ -13,11 +13,11 @@ chrome.on('exit', function() {
   server.kill();
 });
 
-// TODO(vsm): Wait properly for Chrome to start.  For now, waiting 1s.
+// TODO(vsm): Wait properly for Chrome to start.  For now, waiting 3s.
 setTimeout(() => {
   var app = cdp.New({url: process.argv[2]});
   app.then((o) => {
     var devPage = o.devtoolsFrontendUrl.split('?')[1];
     var dev = cdp.New({url: "chrome-devtools://devtools/custom/inspector.html?" + devPage + "&experiments=true"});
   });
-}, 1000);
+}, 3000);
