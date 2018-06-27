@@ -82,7 +82,6 @@ function launchChromeMac() {
 
 function launchChromeLinux() {
   var chromiumPath;
-  console.log('is file? ' + CHROMIUM_DEFAULT_PATH + ': ' + utils.isFile(CHROMIUM_DEFAULT_PATH));
   if (utils.isFile(process.env.CHROMIUM_PATH))
     chromiumPath = process.env.CHROMIUM_PATH;
   else if (utils.isFile(CHROMIUM_DEFAULT_PATH)) {
