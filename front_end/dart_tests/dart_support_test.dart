@@ -33,16 +33,16 @@ class ThingWithFields {
 
 var globalThing = new ThingWithFields();
 
-eval(String expression) {
-  var rewritten = $dartExpressionFor(null, expression);
-  return jsEval(rewritten);
-}
-
 main() async {
   var aString = "abc";
   var aList = [3, 2, 1];
   var aMap = {"a": "b", "c": "d", "7": "Hey!"};
   var thing = new ThingWithFields();
+
+  eval(String expression) {
+    var rewritten = $dartExpressionFor(null, expression);
+    return jsEval(rewritten);
+  }
 
   setUp(() async {
     var element = new ScriptElement()
@@ -58,11 +58,10 @@ main() async {
   });
 
   test("local string", () {
-    expect(eval('aString'), 'abc');
+    expect(eval('aString'), aString);
   });
 
   test("local list", () {
     expect(eval('aList'), 'aList');
   });
-
 }

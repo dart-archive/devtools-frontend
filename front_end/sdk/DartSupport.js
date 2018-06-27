@@ -42,6 +42,12 @@ ${dartExpression}`;
 ${lookupInJSScope}
 ${lookupInThis}
 
+  function evalWithReceiver(arg, expression) {
+     var firstDot = expression ? '.' : '';
+     var newFunction = eval('(function(x) { return x' + firstDot + expression + ';})');
+     newFunction(arg);
+  }
+
   var dart;
   if (window.dart_library) {
     dart = dart_library.import('dart_sdk').dart;
@@ -60,11 +66,12 @@ ${lookupInThis}
       // What if the receiver is correctly null?
       if (receiverObject) return receiverObject;
     }
-    try {
+//    try {
       return eval(jsScopeName || receiver);
-    } catch (error) {}
+//    } catch (error) {}
   }
-  let initial = lookup('${receiver}');
+
+  let initial = lookup(name);
   var handler = {"get": function(target, prop) {
        console.log("getting " + prop + "from " + target);
        let placeholder = {};
@@ -83,15 +90,19 @@ ${lookupInThis}
        else {
          return result;}
        }};
+  var proxy;
   if (typeof initial == 'object') {
-    let proxy = new Proxy(initial, handler);
- /// Wait a minute, what do you want to do here with the proxy??
-    eval('(function(arg) { arg.' + components.join('.');})
-`;
-  for (let getter of components) {
-   expression += `result = dart.dloadRepl(result, "${getter}");\n`
+    proxy = new Proxy(initial, handler);
+  } else {
+    proxy = initial;  // No, I think you'll need to do the dloadRepl thing there, and wrap with a proxy each time????
   }
-  expression += 'return result;})(this)';
+  return evalWithReceiver(proxy, "${components.join('.')}");
+})(this)
+`;
+  // for (let getter of components) {
+  //  expression += `result = dart.dloadRepl(result, "${getter}");\n`
+  // }
+//   expression += 'return result;})(this)';
   return expression;
 }
 
