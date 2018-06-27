@@ -8,11 +8,7 @@ This is a fork of the client-side of the Chrome DevTools, including all JS & CSS
    users, see `go/nodejs-install`
 2. Clone the repo - `git clone https://github.com/dart-lang/devtools-frontend.git`
 3. Go to repo root and run: `npm install`
-4. From the same directory, run
-
-```
-  ./ddt <url>
-```
+4. From the same directory, run `./ddt <url>`
     - This launches a separate instance of Chrome in a new user profile with the
       debugging port open and also starts the devtools server.
     - If CHROMIUM_PATH is set (e.g. `export CHROMIUM_PATH=<path to chrome
