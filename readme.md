@@ -7,9 +7,18 @@ This is a fork of the client-side of the Chrome DevTools, including all JS & CSS
 1. Make sure you have npm installed. https://nodejs.org/en/ - Google internal
    users, see `go/nodejs-install`
 2. Clone the repo - `git clone https://github.com/dart-lang/devtools-frontend.git`
-3. Go to repo root and run:  `./ddt <url>`
+3. Go to repo root and run: `npm install`
+4. From the same directory, run
+
+```
+  ./ddt <url>
+```
     - This launches a separate instance of Chrome in a new user profile with the
-      debugging port open and also starts the devtools server
+      debugging port open and also starts the devtools server.
+    - If CHROMIUM_PATH is set (e.g. `export CHROMIUM_PATH=<path to chrome
+      executable>`) then it will use that version of Chrome. Otherwise, it will
+      default to either `chrome` or `google-chrome` if either of those is found
+      in the PATH.
     - It should automatically open three pages, a reference page, the web app at
       <url> and a Dart DevTools instance on that page.
 
