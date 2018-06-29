@@ -1526,6 +1526,17 @@ Sources.JavaScriptSourceFrame = class extends Sources.UISourceCodeFrame {
       const locations = await this._breakpointManager.possibleBreakpoints(
           this._debuggerSourceCode, new TextUtils.TextRange(lineNumber, 0, lineNumber, lineLength));
       if (locations && locations.length) {
+        if (locations[0].lineNumber != lineNumber) {
+          var consoleView = Console.ConsoleView.instance();
+          var message =
+`\`Inconsistency setting breakpoint - requested line ${lineNumber + 1}, set at line ${locations[0].lineNumber + 1}, in
+${this._uiSourceCode.url()} -
+Google users, please report this at http://go/report-ddc-breakpoint-bug,
+external users at https://github.com/dart-lang/devtools-frontend/issues\``;
+          const executionContext = UI.context.flavor(SDK.ExecutionContext);
+          SDK.consoleModel.evaluateCommandInConsole(
+            executionContext, '', message, true, false);
+        }
         this._setBreakpoint(locations[0].lineNumber, locations[0].columnNumber, condition, enabled);
         return;
       }

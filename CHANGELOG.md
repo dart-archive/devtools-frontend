@@ -8,3 +8,5 @@
  * Turn custom formatters on by default
  * Turn on black boxing of the SDK by default
  * Includes a pending Chrome fix for one of the known breakpoint issues.
+ * Adds a warning when a breakpoint isn't set as expected with instructions for
+   filing a bug.
