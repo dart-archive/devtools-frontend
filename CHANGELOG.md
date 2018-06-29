@@ -10,3 +10,5 @@
  * Includes a pending Chrome fix for one of the known breakpoint issues.
  * Adds a warning when a breakpoint isn't set as expected with instructions for
    filing a bug.
+ * Make the theme dark by default, so it's more clearly distinguished from
+   normal devtools.
