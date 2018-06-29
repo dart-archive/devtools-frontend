@@ -46,6 +46,8 @@ This is a fork of the client-side of the Chrome DevTools, including all JS & CSS
     expression of the form "object.thing.otherThing" work so far, and some
     object references won't work (e.g. library variables).
   - A fix for one of the breakpoint location problems
+  - The dark theme is used by default, to visually distinguish it from normal
+    devtools. It can be changed back in devtools settings.
 
 ### Bugs
 

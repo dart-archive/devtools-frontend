@@ -8,3 +8,5 @@
  * Turn custom formatters on by default
  * Turn on black boxing of the SDK by default
  * Includes a pending Chrome fix for one of the known breakpoint issues.
+ * Make the theme dark by default, so it's more clearly distinguished from
+   normal devtools.
