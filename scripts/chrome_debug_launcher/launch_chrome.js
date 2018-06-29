@@ -11,7 +11,12 @@ var utils = require('../utils');
 
 var REMOTE_DEBUGGING_PORT = parseInt(process.env.REMOTE_DEBUGGING_PORT, 10) || 9222;
 var SERVER_PORT = parseInt(process.env.PORT, 10) || 8090;
-var CHROMIUM_DEFAULT_PATH = path.resolve(__dirname, '..', '..', '..', '..', '..', '..', 'out', 'Release', 'chrome');
+// Try to find an existing Chrome to launch, either as 'chrome' or 'google-chrome' in the path.
+// This will be used if CHROMIUM_PATH is unset.
+var CHROMIUM_DEFAULT_PATH = childProcess.spawnSync('which', ['chrome']).output.join('').trim();
+if (!CHROMIUM_DEFAULT_PATH) {
+  CHROMIUM_DEFAULT_PATH = childProcess.spawnSync('which', ['google-chrome']).output.join('').trim();
+}
 var CHROME_PROFILE_PATH = path.resolve(__dirname, '..', '..', '.dev_profile');
 
 var Flags = {
