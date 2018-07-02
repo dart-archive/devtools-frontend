@@ -56,8 +56,8 @@
         },
         {
             "type": "action",
-            "actionId": "main.debug-reload",
-            "className": "Main.ReloadActionDelegate",
+            "actionId": "dart.dart-reload",
+            "className": "Dart.ReloadActionDelegate",
             "bindings": [
                 {
                     "shortcut": "Alt+R"
