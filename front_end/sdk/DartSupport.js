@@ -34,6 +34,28 @@ Dart.ReloadActionDelegate = class {
   }
 };
 
+Dart.ToggleSourcemapsActionDelegate = class {
+
+  constructor() {}
+
+  /**
+   * @override
+   * @param {!UI.Context} context
+   * @param {string} actionId
+   * @return {boolean}
+   */
+  handleAction(context, actionId) {
+    switch (actionId) {
+      case 'dart.toggleSourcemaps':
+        const setting = Common.moduleSetting('jsSourceMapsEnabled');
+        setting.set(!setting.get());
+        return true;
+    }
+    return false;
+  }
+};
+
+
 (function() {
 var lookupInJSScope = `function lookupInJsScope(name) {
   try {
