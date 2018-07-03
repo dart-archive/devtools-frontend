@@ -204,7 +204,7 @@
             "title": "Theme:",
             "settingName": "uiTheme",
             "settingType": "enum",
-            "defaultValue": "dark",
+            "defaultValue": "default",
             "options": [
                 {
                     "title": "Switch to light theme",
