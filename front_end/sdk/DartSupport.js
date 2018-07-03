@@ -46,6 +46,7 @@ Dart.ToggleSourcemapsActionDelegate = class {
    */
   handleAction(context, actionId) {
     switch (actionId) {
+      // TODO(alanknight): Consider moving this somewhere else and upstreaming.
       case 'dart.toggleSourcemaps':
         const setting = Common.moduleSetting('jsSourceMapsEnabled');
         setting.set(!setting.get());
