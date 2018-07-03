@@ -1,3 +1,62 @@
+// TODO(alanknight): Initialize the namespace properly. Where should
+// that happen?
+Dart = {}
+
+/**
+ * @implements {UI.ActionDelegate}
+ * @unrestricted
+ */
+Dart.ReloadActionDelegate = class {
+
+  constructor() {
+    this.hotRestartCommand =
+      'if (window.dart_library) {dart_library.reload();}';
+  }
+
+  /**
+   * @override
+   * @param {!UI.Context} context
+   * @param {string} actionId
+   * @return {boolean}
+   */
+  handleAction(context, actionId) {
+    switch (actionId) {
+      case 'dart.dart-reload':
+        const executionContext = UI.context.flavor(SDK.ExecutionContext);
+        executionContext
+          .evaluate(
+              {expression: this.hotRestartCommand},
+              /* userGesture */ false,
+              /* awaitPromise */ false);
+        return true;
+    }
+    return false;
+  }
+};
+
+Dart.ToggleSourcemapsActionDelegate = class {
+
+  constructor() {}
+
+  /**
+   * @override
+   * @param {!UI.Context} context
+   * @param {string} actionId
+   * @return {boolean}
+   */
+  handleAction(context, actionId) {
+    switch (actionId) {
+      // TODO(alanknight): Consider moving this somewhere else and upstreaming.
+      case 'dart.toggleSourcemaps':
+        const setting = Common.moduleSetting('jsSourceMapsEnabled');
+        setting.set(!setting.get());
+        return true;
+    }
+    return false;
+  }
+};
+
+
 (function() {
 var lookupInJSScope = `function lookupInJsScope(name) {
   try {

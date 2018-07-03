@@ -56,14 +56,25 @@
         },
         {
             "type": "action",
-            "actionId": "main.debug-reload",
-            "className": "Main.ReloadActionDelegate",
+            "actionId": "dart.dart-reload",
+            "className": "Dart.ReloadActionDelegate",
             "bindings": [
                 {
                     "shortcut": "Alt+R"
                 }
             ]
         },
+        {
+            "type": "action",
+            "actionId": "dart.toggleSourcemaps",
+            "className": "Dart.ToggleSourcemapsActionDelegate",
+            "bindings": [
+                {
+                    "shortcut": "Alt+S"
+                }
+            ]
+        },
+
         {
             "type": "action",
             "category": "DevTools",
