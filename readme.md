@@ -51,8 +51,14 @@ This is a fork of the client-side of the Chrome DevTools, including all JS & CSS
     expression of the form "object.thing.otherThing" work so far, and some
     object references won't work (e.g. library variables).
   - A fix for one of the breakpoint location problems
-  - The dark theme is used by default, to visually distinguish it from normal
+  - (This has been temporarily reverted, until the SDK with the fixes for custom formatter colors is released) 
+    The dark theme is used by default, to visually distinguish it from normal
     devtools. It can be changed back in devtools settings.
+  - Added keyboard shortcuts Alt-R for hot-restart, and Alt-S to toggle source maps.
+  - If it detects a breakpoint that doesn't get set where you clicked, you'll get a description on the 
+    console saying so and indicating where to file a bug.
+  - Inline values displayed in the source pane use the custom formatters, rather than displaying 
+    with very long class names.
 
 ### Bugs
 
