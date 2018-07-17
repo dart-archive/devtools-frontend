@@ -1528,7 +1528,23 @@ Sources.JavaScriptSourceFrame = class extends Sources.UISourceCodeFrame {
       --linesToCheck;
       const locations = await this._breakpointManager.possibleBreakpoints(
           this._debuggerSourceCode, new TextUtils.TextRange(lineNumber, 0, lineNumber, lineLength));
+      // DDC splits variable declarations with initialization into a
+      // declaration and initialization in the constructor. So the
+      // single Dart line spans a significant amount of JS. Listing
+      // all possible locations can list a lot of possible lines, and
+      // the regular devtools just picks the first one. In Dart code
+      // this can be seen as clicking on any declaration putting a
+      // breakpoint on the first one. So we make this prefer the first
+      // breakpoint on the matching line, which is the declaration.
+      //
+      // TODO(alanknight): Sometimes this results in putting disabled
+      // breakpoint markers on the same range of lines. You can still
+      // set breakpoints on them normally, but it's ugly. Consider
+      // also disabling this. See addBreakpoint/addInlineDecorations.
+      let goodLocation = locations.find(location => location.lineNumber == lineNumber)
+          || locations[0];
       if (locations && locations.length) {
+        // TODO(alanknight): Remove this if we're not having breakpoint issues.
         if (locations[0].lineNumber != lineNumber) {
           var consoleView = Console.ConsoleView.instance();
           var message =
@@ -1540,7 +1556,7 @@ external users at https://github.com/dart-lang/devtools-frontend/issues\``;
           SDK.consoleModel.evaluateCommandInConsole(
             executionContext, '', message, true, false);
         }
-        this._setBreakpoint(locations[0].lineNumber, locations[0].columnNumber, condition, enabled);
+        this._setBreakpoint(goodLocation.lineNumber, goodLocation.columnNumber, condition, enabled);
         return;
       }
     }
