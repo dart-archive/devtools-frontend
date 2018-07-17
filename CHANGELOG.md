@@ -12,3 +12,5 @@
    filing a bug.
  * Make the theme dark by default, so it's more clearly distinguished from
    normal devtools.
+ * Fix some breakpoint setting issues on variable declarations with
+   initialization.
