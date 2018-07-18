@@ -276,10 +276,11 @@ Sources.WatchExpression = class extends Common.Object {
   update() {
     const currentExecutionContext = UI.context.flavor(SDK.ExecutionContext);
     if (currentExecutionContext && this._expression) {
+      const dartVersion = $dartExpressionFor(currentExecutionContext, this._expression);
       currentExecutionContext
           .evaluate(
               {
-                expression: this._expression,
+                expression: dartVersion,
                 objectGroup: Sources.WatchExpression._watchObjectGroupId,
                 includeCommandLineAPI: false,
                 silent: true,
