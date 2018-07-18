@@ -1,0 +1,25 @@
+#!/usr/bin/env dart
+// Copyright (c) 2018, the Dart project authors.  Please see the AUTHORS file
+// for details. All rights reserved. Use of this source code is governed by a
+// BSD-style license that can be found in the LICENSE file.
+
+import 'dart:io';
+
+void main(List<String> args) {
+  if (args.length != 1) {
+    print('Usage: ddt <url-to-debug>');
+    exit(1);
+  }
+  var url = args[0];
+  var dir = Directory.current;
+  var ddt = new File(Platform.script.path);
+  var ddtDir = ddt.parent;
+  var resolved = dir.uri.resolve(url);
+
+  Process
+      .start('npm', ['start', '$resolved'], workingDirectory: ddtDir.path)
+      .then((process) {
+    stdout.addStream(process.stdout);
+    stderr.addStream(process.stderr);
+  });
+}

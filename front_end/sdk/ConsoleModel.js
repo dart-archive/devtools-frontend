@@ -122,9 +122,10 @@ SDK.ConsoleModel = class extends Common.Object {
    * @param {boolean} awaitPromise
    */
   async evaluateCommandInConsole(executionContext, originatingMessage, expression, useCommandLineAPI, awaitPromise) {
+    const dartVersion = $dartExpressionFor(executionContext, expression);
     const result = await executionContext.evaluate(
         {
-          expression: expression,
+          expression: dartVersion,
           objectGroup: 'console',
           includeCommandLineAPI: useCommandLineAPI,
           silent: false,

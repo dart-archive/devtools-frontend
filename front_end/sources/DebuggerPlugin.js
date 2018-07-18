@@ -1014,7 +1014,10 @@ Sources.DebuggerPlugin = class extends Sources.UISourceCodeFrame.Plugin {
         const value = valuesMap.get(name);
         const propertyCount = value.preview ? value.preview.properties.length : 0;
         const entryCount = value.preview && value.preview.entries ? value.preview.entries.length : 0;
-        if (value.preview && propertyCount + entryCount < 10) {
+        if (value.customPreview() && propertyCount + entryCount < 10) {
+          var customValueEl = (new ObjectUI.CustomPreviewComponent(value)).element;
+          nameValuePair.appendChild(customValueEl);
+        } else if (value.preview && propertyCount + entryCount < 10) {
           formatter.appendObjectPreview(nameValuePair, value.preview, false /* isEntry */);
         } else {
           nameValuePair.appendChild(ObjectUI.ObjectPropertiesSection.createValueElement(
@@ -1529,8 +1532,35 @@ Sources.DebuggerPlugin = class extends Sources.UISourceCodeFrame.Plugin {
       const end = this._transformer.editorToRawLocation(editorLineNumber, lineLength);
       const locations = await this._breakpointManager.possibleBreakpoints(
           this._uiSourceCode, new TextUtils.TextRange(start[0], start[1], end[0], end[1]));
+      // DDC splits variable declarations with initialization into a
+      // declaration and initialization in the constructor. So the
+      // single Dart line spans a significant amount of JS. Listing
+      // all possible locations can list a lot of possible lines, and
+      // the regular devtools just picks the first one. In Dart code
+      // this can be seen as clicking on any declaration putting a
+      // breakpoint on the first one. So we make this prefer the first
+      // breakpoint on the matching line, which is the declaration.
+      //
+      // TODO(alanknight): Sometimes this results in putting disabled
+      // breakpoint markers on the same range of lines. You can still
+      // set breakpoints on them normally, but it's ugly. Consider
+      // also disabling this. See addBreakpoint/addInlineDecorations.
+      let goodLocation = locations.find(location => location.lineNumber == editorLineNumber)
+          || locations[0];
       if (locations && locations.length) {
-        this._setBreakpoint(locations[0].lineNumber, locations[0].columnNumber, condition, enabled);
+        // TODO(alanknight): Remove this if we're not having breakpoint issues.
+        if (locations[0].lineNumber != editorLineNumber) {
+          var consoleView = Console.ConsoleView.instance();
+          var message =
+`\`Inconsistency setting breakpoint - requested line ${editorLineNumber + 1}, set at line ${locations[0].lineNumber + 1}, in
+${this._uiSourceCode.url()} -
+Google users, please report this at http://go/report-ddc-breakpoint-bug,
+external users at https://github.com/dart-lang/devtools-frontend/issues\``;
+          const executionContext = UI.context.flavor(SDK.ExecutionContext);
+          SDK.consoleModel.evaluateCommandInConsole(
+            executionContext, '', message, true, false);
+        }
+        this._setBreakpoint(goodLocation.lineNumber, goodLocation.columnNumber, condition, enabled);
         return;
       }
     }
