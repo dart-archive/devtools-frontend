@@ -323,7 +323,8 @@ Console.ConsolePrompt = class extends UI.Widget {
     const data = this._history.historyData();
     for (let i = data.length - 1; i >= 0 && result.length < 50; --i) {
       const item = data[i];
-      if (!item.startsWith(text))
+      // DDT bug fix when item is null. TODO(alanknight): Upstream or remove if fixed upstream.
+      if (!item || !item.startsWith(text))
         continue;
       if (set.has(item))
         continue;
