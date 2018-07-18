@@ -340,11 +340,11 @@ SDK.TextSourceMap = class {
     if (first >= mappings.length || mappings[first].sourceLineNumber !== lineNumber)
       return null;
     const columnMappings = mappings.slice(first, last);
-    if (columnMappings.length == 0)
+    if (!columnMappings.length)
       return null;
     const index =
         columnMappings.lowerBound(columnNumber, (columnNumber, mapping) => columnNumber - mapping.sourceColumnNumber);
-    return (index >= columnMappings.length) ? columnMappings[columnMappings.length - 1] : columnMappings[index];
+    return index >= columnMappings.length ? columnMappings[columnMappings.length - 1] : columnMappings[index];
 
     /**
      * @param {number} lineNumber

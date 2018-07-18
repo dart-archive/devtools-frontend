@@ -325,10 +325,8 @@ Bindings.CompilerScriptMapping.Binding = class {
    */
   _recreateUISourceCodeIfNeeded(frameId) {
     const sourceMap = this._referringSourceMaps.peekLast();
-    // TODO(vsm): This short-circuit breaks hot restart in Dart / DDC.
-    // Investigate why.
-    // if (this._activeSourceMap === sourceMap)
-    //   return;
+    if (this._activeSourceMap === sourceMap)
+      return;
     this._activeSourceMap = sourceMap;
 
     const newUISourceCode = this._project.createUISourceCode(this._url, Common.resourceTypes.SourceMapScript);

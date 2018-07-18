@@ -218,7 +218,7 @@
             "title": "Enable custom formatters",
             "settingName": "customFormatters",
             "settingType": "boolean",
-            "defaultValue": true
+            "defaultValue": false
         },
         {
             "type": "setting",
@@ -307,8 +307,7 @@
         "PerformanceMetricsModel.js",
         "../SupportedCSSProperties.js",
         "FilmStripModel.js",
-        "ConsoleModel.js",
-        "DartSupport.js"
+        "ConsoleModel.js"
     ],
     "skip_compilation": [
         "../SupportedCSSProperties.js"

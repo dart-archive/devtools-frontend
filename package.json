@@ -2,7 +2,7 @@
   "name": "chrome-devtools-frontend",
   "description": "Chrome DevTools UI",
   "scripts": {
-    "start": "node scripts/dart_debug.js",
+    "start": "node scripts/start_chrome_and_server.js",
     "chrome": "node scripts/chrome_debug_launcher/launch_chrome.js",
     "server": "node scripts/hosted_mode/server.js",
     "test": "node scripts/npm_test.js",
@@ -13,7 +13,8 @@
     "format-py": "yapf --exclude scripts/build/rjsmin.py -i --recursive scripts PRESUBMIT.py",
     "extract": "node scripts/extract_module/extract_module.js",
     "check-gn": "node scripts/check_gn.js",
-    "check-json": "node scripts/json_validator/validate_module_json.js"
+    "check-json": "node scripts/json_validator/validate_module_json.js",
+    "generate-jsconfig": "node scripts/generate_jsconfig.js"
   },
   "repository": {
     "type": "git",
@@ -32,9 +33,6 @@
     "url": "https://bugs.chromium.org/p/chromium/issues/list?can=2&q=component:Platform%3EDevTools%20&sort=-opened&colspec=ID%20Stars%20Owner%20Summary%20Modified%20Opened"
   },
   "homepage": "https://devtools.chrome.com",
-  "dependencies": {
-    "chrome-remote-interface": "^0.25.6"
-  },
   "devDependencies": {
     "ajv": "^5.1.5"
   }

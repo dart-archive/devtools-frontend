@@ -232,6 +232,7 @@ Common.resourceTypes = {
   SourceMapStyleSheet:
       new Common.ResourceType('sm-stylesheet', 'Stylesheet', Common.resourceCategories.Stylesheet, true),
   Manifest: new Common.ResourceType('manifest', 'Manifest', Common.resourceCategories.Manifest, true),
+  SignedExchange: new Common.ResourceType('signed-exchange', 'SignedExchange', Common.resourceCategories.Other, false),
 };
 
 
@@ -241,7 +242,7 @@ Common.ResourceType._mimeTypeByName = new Map([
 ]);
 
 Common.ResourceType._resourceTypeByExtension = new Map([
-  ['js', Common.resourceTypes.Script],
+  ['js', Common.resourceTypes.Script], ['mjs', Common.resourceTypes.Script],
 
   ['css', Common.resourceTypes.Stylesheet], ['xsl', Common.resourceTypes.Stylesheet],
 
@@ -257,8 +258,8 @@ Common.ResourceType._resourceTypeByExtension = new Map([
 
 Common.ResourceType._mimeTypeByExtension = new Map([
   // Web extensions
-  ['js', 'text/javascript'], ['css', 'text/css'], ['html', 'text/html'], ['htm', 'text/html'],
-  ['mjs', 'text/javascript'], ['xml', 'application/xml'], ['xsl', 'application/xml'],
+  ['js', 'text/javascript'], ['mjs', 'text/javascript'], ['css', 'text/css'], ['html', 'text/html'],
+  ['htm', 'text/html'], ['xml', 'application/xml'], ['xsl', 'application/xml'],
 
   // HTML Embedded Scripts, ASP], JSP
   ['asp', 'application/x-aspx'], ['aspx', 'application/x-aspx'], ['jsp', 'application/x-jsp'],
@@ -274,7 +275,7 @@ Common.ResourceType._mimeTypeByExtension = new Map([
   ['dart', 'text/javascript'],
 
   // TypeScript
-  ['ts', 'text/typescript'], ['tsx', 'text/typescript'],
+  ['ts', 'text/typescript'], ['tsx', 'text/typescript-jsx'],
 
   // JSON
   ['json', 'application/json'], ['gyp', 'application/json'], ['gypi', 'application/json'],

@@ -247,6 +247,7 @@ Network.NetworkPanel = class extends UI.Panel {
    */
   _createThrottlingConditionsSelect() {
     const toolbarItem = new UI.ToolbarComboBox(null);
+    toolbarItem.setTitle(ls`Throttling`);
     toolbarItem.setMaxWidth(160);
     MobileThrottling.throttlingManager().decorateSelectWithNetworkThrottling(toolbarItem.selectElement());
     return toolbarItem;
@@ -383,20 +384,6 @@ Network.NetworkPanel = class extends UI.Panel {
 
   /**
    * @override
-   * @param {!KeyboardEvent} event
-   */
-  handleShortcut(event) {
-    if (this._networkItemView && event.keyCode === UI.KeyboardShortcut.Keys.Esc.code) {
-      this._showRequest(null);
-      event.handled = true;
-      return;
-    }
-
-    super.handleShortcut(event);
-  }
-
-  /**
-   * @override
    */
   wasShown() {
     UI.context.setFlavor(Network.NetworkPanel, this);
@@ -523,7 +510,7 @@ Network.NetworkPanel = class extends UI.Panel {
    */
   _onFilmFrameSelected(event) {
     const timestamp = /** @type {number} */ (event.data);
-    this._overviewPane.requestWindowTimes(0, timestamp);
+    this._overviewPane.setWindowTimes(0, timestamp);
   }
 
   /**
@@ -702,7 +689,7 @@ Network.NetworkPanel.FilmStripRecorder = class {
 /**
  * @implements {UI.ActionDelegate}
  */
-Network.NetworkPanel.RecordActionDelegate = class {
+Network.NetworkPanel.ActionDelegate = class {
   /**
    * @override
    * @param {!UI.Context} context
@@ -712,8 +699,24 @@ Network.NetworkPanel.RecordActionDelegate = class {
   handleAction(context, actionId) {
     const panel = UI.context.flavor(Network.NetworkPanel);
     console.assert(panel && panel instanceof Network.NetworkPanel);
-    panel._toggleRecording();
-    return true;
+    switch (actionId) {
+      case 'network.toggle-recording':
+        panel._toggleRecording();
+        return true;
+      case 'network.hide-request-details':
+        if (!panel._networkItemView)
+          return false;
+        panel._showRequest(null);
+        return true;
+      case 'network.search':
+        const selection = UI.inspectorView.element.window().getSelection();
+        let queryCandidate = '';
+        if (selection.rangeCount)
+          queryCandidate = selection.toString().replace(/\r?\n.*/, '');
+        Network.SearchNetworkView.openSearch(queryCandidate);
+        return true;
+    }
+    return false;
   }
 };
 
@@ -764,32 +767,5 @@ Network.SearchNetworkView = class extends Search.SearchView {
    */
   createScope() {
     return new Network.NetworkSearchScope();
-  }
-};
-
-/**
- * @implements {UI.ActionDelegate}
- */
-Network.NetworkPanel.SearchActionDelegate = class {
-  /**
-   * @override
-   * @param {!UI.Context} context
-   * @param {string} actionId
-   * @return {boolean}
-   */
-  handleAction(context, actionId) {
-    this._showSearch();
-    return true;
-  }
-
-  /**
-   * @return {!Promise}
-   */
-  _showSearch() {
-    const selection = UI.inspectorView.element.window().getSelection();
-    let queryCandidate = '';
-    if (selection.rangeCount)
-      queryCandidate = selection.toString().replace(/\r?\n.*/, '');
-    return Network.SearchNetworkView.openSearch(queryCandidate);
   }
 };
