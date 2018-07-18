@@ -567,7 +567,7 @@ Console.ConsoleViewMessage = class {
     const result = createElement('span');
     const description = obj.description || '';
     if (description.length > Console.ConsoleViewMessage._MaxTokenizableStringLength)
-      result.appendChild(Console.ConsoleViewMessage._createExpandableFragment(description));
+      result.appendChild(UI.createExpandableText(description, Console.ConsoleViewMessage._LongStringVisibleLength));
     else
       result.createTextChild(description);
     if (obj.objectId)
@@ -850,27 +850,36 @@ Console.ConsoleViewMessage = class {
      * @param {!Element} a
      * @param {*} b
      * @this {!Console.ConsoleViewMessage}
+     * @return {!Element}
      */
     function append(a, b) {
       if (b instanceof Node) {
         a.appendChild(b);
-      } else if (typeof b !== 'undefined') {
-        let toAppend = Console.ConsoleViewMessage._linkifyStringAsFragment(String(b));
-        if (currentStyle) {
-          const wrapper = createElement('span');
-          wrapper.style.setProperty('contain', 'paint');
-          wrapper.style.setProperty('display', 'inline-block');
-          wrapper.appendChild(toAppend);
-          applyCurrentStyle(wrapper);
-          for (const child of wrapper.children) {
-            if (child.classList.contains('devtools-link'))
-              this._applyForcedVisibleStyle(child);
-            else
-              applyCurrentStyle(child);
-          }
-          toAppend = wrapper;
+        return a;
+      }
+      if (typeof b === 'undefined')
+        return a;
+      if (!currentStyle) {
+        a.appendChild(Console.ConsoleViewMessage._linkifyStringAsFragment(String(b)));
+        return a;
+      }
+      const lines = String(b).split('\n');
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
+        const lineFragment = Console.ConsoleViewMessage._linkifyStringAsFragment(line);
+        const wrapper = createElement('span');
+        wrapper.style.setProperty('contain', 'paint');
+        wrapper.style.setProperty('display', 'inline-block');
+        wrapper.style.setProperty('max-width', '100%');
+        wrapper.appendChild(lineFragment);
+        applyCurrentStyle(wrapper);
+        for (const child of wrapper.children) {
+          if (child.classList.contains('devtools-link'))
+            this._applyForcedVisibleStyle(child);
         }
-        a.appendChild(toAppend);
+        a.appendChild(wrapper);
+        if (i < lines.length - 1)
+          a.appendChild(createElement('br'));
       }
       return a;
     }
@@ -1359,7 +1368,7 @@ Console.ConsoleViewMessage = class {
    */
   static linkifyWithCustomLinkifier(string, linkifier) {
     if (string.length > Console.ConsoleViewMessage._MaxTokenizableStringLength)
-      return Console.ConsoleViewMessage._createExpandableFragment(string);
+      return UI.createExpandableText(string, Console.ConsoleViewMessage._LongStringVisibleLength);
     const container = createDocumentFragment();
     const tokens = this._tokenizeMessageText(string);
     for (const token of tokens) {
@@ -1381,31 +1390,6 @@ Console.ConsoleViewMessage = class {
       }
     }
     return container;
-  }
-
-  /**
-   * @param {string} text
-   * @return {!DocumentFragment}
-   */
-  static _createExpandableFragment(text) {
-    const fragment = createDocumentFragment();
-    fragment.textContent = text.slice(0, Console.ConsoleViewMessage._LongStringVisibleLength);
-    const hiddenText = text.slice(Console.ConsoleViewMessage._LongStringVisibleLength);
-
-    const expandButton = fragment.createChild('span', 'console-inline-button');
-    expandButton.setAttribute('data-text', ls`Show ${Number.withThousandsSeparator(hiddenText.length)} more`);
-    expandButton.addEventListener('click', () => {
-      if (expandButton.parentElement)
-        expandButton.parentElement.insertBefore(createTextNode(hiddenText), expandButton);
-      expandButton.remove();
-    });
-
-    const copyButton = fragment.createChild('span', 'console-inline-button');
-    copyButton.setAttribute('data-text', ls`Copy`);
-    copyButton.addEventListener('click', () => {
-      InspectorFrontendHost.copyText(text);
-    });
-    return fragment;
   }
 
   /**

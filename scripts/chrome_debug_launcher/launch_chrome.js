@@ -11,12 +11,7 @@ var utils = require('../utils');
 
 var REMOTE_DEBUGGING_PORT = parseInt(process.env.REMOTE_DEBUGGING_PORT, 10) || 9222;
 var SERVER_PORT = parseInt(process.env.PORT, 10) || 8090;
-// Try to find an existing Chrome to launch, either as 'chrome' or 'google-chrome' in the path.
-// This will be used if CHROMIUM_PATH is unset.
-var CHROMIUM_DEFAULT_PATH = childProcess.spawnSync('which', ['chrome']).output.join('').trim();
-if (!CHROMIUM_DEFAULT_PATH) {
-  CHROMIUM_DEFAULT_PATH = childProcess.spawnSync('which', ['google-chrome']).output.join('').trim();
-}
+var CHROMIUM_DEFAULT_PATH = path.resolve(__dirname, '..', '..', '..', '..', '..', '..', 'out', 'Release', 'chrome');
 var CHROME_PROFILE_PATH = path.resolve(__dirname, '..', '..', '.dev_profile');
 
 var Flags = {
@@ -31,8 +26,9 @@ if (utils.includes(process.argv, Flags.RESET_PROFILE)) {
 
 var chromeArgs = [
   `--remote-debugging-port=${REMOTE_DEBUGGING_PORT}`,
-  `--custom-devtools-frontend=http://127.0.0.1:${SERVER_PORT}/front_end/`, `--no-first-run`,
-  '--enable-devtools-experiments', `--user-data-dir=${CHROME_PROFILE_PATH}`
+  `--custom-devtools-frontend=http://localhost:${SERVER_PORT}/front_end/`, `--no-first-run`,
+  '--enable-devtools-experiments', `http://localhost:${REMOTE_DEBUGGING_PORT}#custom=true&experiments=true`,
+  `https://devtools.chrome.com`, `--user-data-dir=${CHROME_PROFILE_PATH}`
 ].concat(process.argv.slice(2));
 
 if (process.platform === 'win32') {
