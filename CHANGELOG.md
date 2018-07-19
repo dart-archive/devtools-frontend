@@ -14,3 +14,5 @@
    normal devtools.
  * Fix some breakpoint setting issues on variable declarations with
    initialization.
+ * Suppress confusing additional (disabled) breakpoints that appear on lines
+   that have complex source mappings.
