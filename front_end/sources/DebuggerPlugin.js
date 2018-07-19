@@ -1343,6 +1343,10 @@ Sources.DebuggerPlugin = class extends Sources.UISourceCodeFrame.Plugin {
           continue;
         columns.add(editorLocation.columnNumber);
       }
+      // [ddt] If possibleLocations is too large, just ignore it. We
+      // can get 30 lines of additionally highlighted breakpoints.
+      // Just suppress anything that's more than one line.
+      if (possibleLocations.find(loc => loc.lineNumber != editorLineNumber)) return;
       for (const location of possibleLocations) {
         const editorLocation = this._transformer.rawToEditorLocation(location.lineNumber, location.columnNumber);
         if (columns.has(editorLocation[1]))
@@ -1549,7 +1553,7 @@ Sources.DebuggerPlugin = class extends Sources.UISourceCodeFrame.Plugin {
           || locations[0];
       if (locations && locations.length) {
         // TODO(alanknight): Remove this if we're not having breakpoint issues.
-        if (locations[0].lineNumber != editorLineNumber) {
+        if (goodLocation.lineNumber != editorLineNumber) {
           var consoleView = Console.ConsoleView.instance();
           var message =
 `\`Inconsistency setting breakpoint - requested line ${editorLineNumber + 1}, set at line ${locations[0].lineNumber + 1}, in
