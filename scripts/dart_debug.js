@@ -13,11 +13,27 @@ chrome.on('exit', function() {
   server.kill();
 });
 
+// Check for environment variables to replace URLS that start with
+// prefix to a pattern starting with alternate, and also adding the
+// /lib parameter. Useful for debugging production, where the source
+// mapped locations may be inaccessible.
+var prefix = process.env["DDT_REPLACE_URL_PREFIX"];
+var replaceParameter = prefix ? "_ddtreplaceprefix=" + encodeURI(prefix) : "";
+var alternate = process.env["DDT_URL_ALTERNATE_PREFIX"];
+var alternateParameter = alternate ? "&_ddtalternate=" + encodeURI(alternate) : "";
+var extraArgs = replaceParameter + alternateParameter;
+
 // TODO(vsm): Wait properly for Chrome to start.  For now, waiting 3s.
 setTimeout(() => {
-  var app = cdp.New({url: process.argv[2]});
-  app.then((o) => {
+  var appUrl = process.argv[2];
+  // If there are no other query parameters, start with a question
+  // mark, otherwise, start with an ampersand.
+  var prefix = appUrl.includes('?') ? '&' : '?';
+  var fullUrl = process.argv[2] + prefix + extraArgs;
+  var app = cdp.New({url: fullUrl});
+  app.then(async (o) => {
     var devPage = o.devtoolsFrontendUrl.split('?')[1];
-    var dev = cdp.New({url: "chrome-devtools://devtools/custom/inspector.html?" + devPage + "&experiments=true"});
+    var devUrl = "chrome-devtools://devtools/custom/inspector.html?" + devPage +  "&experiments=true";
+    var dev = await cdp.New({url: devUrl});
   });
 }, 3000);
