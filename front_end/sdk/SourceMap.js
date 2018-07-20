@@ -434,6 +434,10 @@ SDK.TextSourceMap = class {
    * @param {!SDK.SourceMapV3} sourceMap
    */
   _parseSources(sourceMap) {
+    var inspectedUrl = SDK.targetManager.mainTarget().inspectedURL();
+    var queryParameters = new URL(inspectedUrl).searchParams;
+    var replacePrefix = queryParameters.get('_ddtreplaceprefix');
+    var alternate = queryParameters.get('_ddtalternate');
     const sourcesList = [];
     let sourceRoot = sourceMap.sourceRoot || '';
     if (sourceRoot && !sourceRoot.endsWith('/'))
@@ -441,6 +445,20 @@ SDK.TextSourceMap = class {
     for (let i = 0; i < sourceMap.sources.length; ++i) {
       const href = sourceRoot + sourceMap.sources[i];
       let url = Common.ParsedURL.completeURL(this._baseURL, href) || href;
+      if (replacePrefix && url.startsWith(replacePrefix)) {
+        var index = url.indexOf('/google3/');
+        if (index > 0) {
+          url = alternate + url.substring(index + '/google3/'.length - 1);
+        } else {
+          var index = url.indexOf('/packages/');
+          if (index > 0) {
+            var sub = url.substring(index + '/packages/'.length);
+            var parts = sub.split('/');
+            var pkg = parts[0].replace(/\./g, '/') + '/lib/';
+            url = alternate + pkg + parts.slice(1).join('/');
+          }
+        }
+      }
       const source = sourceMap.sourcesContent && sourceMap.sourcesContent[i];
       if (url === this._compiledURL && source)
         url += Common.UIString('? [sm]');
