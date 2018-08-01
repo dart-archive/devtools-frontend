@@ -85,11 +85,10 @@ SDK.DebuggerModel = class extends SDK.SDKModel {
     if (!sourceMapURL)
       return null;
     // TODO(vsm): For Dart, the sourceURL has a cache-busting tag.
-    // Not clear we need both the sourceURL and the sourceMapURL,
-    // so suppressing the former.  Alternatively, we could strip
-    // the cache-busting tag.  Either keeps the sourceMapId consistent
-    // across hot reloads.
-    return executionContextId + /* ':' + sourceURL + */ ':' + sourceMapURL;
+    // The sourceMapURL is relative, so not necessarily unique.
+    // Computing the full sourceMapURL instead.  This keeps the
+    // sourceMapId consistent across hot reloads.
+    return executionContextId + Common.ParsedURL.completeURL(sourceURL, sourceMapURL);
   }
 
   /**
