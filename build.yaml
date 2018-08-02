@@ -1,0 +1,9 @@
+targets:
+  $default:
+    sources:
+      - front_end/dart_tests/**
+      - front_end/sdk/**
+      - scripts/**
+      - services/**
+      - test/**
+      - lib/**
