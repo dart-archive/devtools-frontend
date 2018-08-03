@@ -11,7 +11,6 @@ import 'package:test/test.dart';
 import 'package:js/js.dart';
 import 'dart:html';
 import 'dart:async';
-import 'dart:developer';
 
 @JS()
 external String $dartExpressionFor(context, String expression);
