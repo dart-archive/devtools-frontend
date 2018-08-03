@@ -80,6 +80,8 @@ var lookupInThis = `function lookupInThis(__this, name) {
 };`;
 
 window.$dartExpressionFor = function(executionContext, dartExpression) {
+  // Check if we're in a DDC context and fall back to JS evaluation if not.
+  if (!window.dart_library && !window.requirejs) return dartExpression;
   var components = dartExpression.split('.');
 
   // A crude check if all of our components look like valid Dart
