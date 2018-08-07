@@ -12,3 +12,10 @@
    filing a bug.
  * Make the theme dark by default, so it's more clearly distinguished from
    normal devtools.
+ * Fix some breakpoint setting issues on variable declarations with
+   initialization.
+ * Suppress confusing additional (disabled) breakpoints that appear on lines
+   that have complex source mappings.
+ * Download and check-in the files that are normally read from the
+   chrome-devtools-frontend site, in the interests of having this entirely
+   statically serveable. Those files will need to be updated for Chrome changes.

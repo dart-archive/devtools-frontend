@@ -252,7 +252,7 @@ Workspace.UISourceCode = class extends Common.Object {
           this._content = content;
           this._contentEncoded = encoded;
         }
-        fulfill(content);
+        fulfill(this._content);
       });
     }
     return this._requestContentPromise;
@@ -317,7 +317,7 @@ Workspace.UISourceCode = class extends Common.Object {
    */
   _commitContent(content) {
     if (this._project.canSetFileContent())
-      this._project.setFileContent(this, content, false, function() {});
+      this._project.setFileContent(this, content, false);
     this._contentCommitted(content, true);
   }
 
@@ -334,14 +334,11 @@ Workspace.UISourceCode = class extends Common.Object {
     this._hasCommits = true;
 
     this._innerResetWorkingCopy();
-    this.dispatchEventToListeners(
-        Workspace.UISourceCode.Events.WorkingCopyCommitted, {uiSourceCode: this, content: content});
-    this._project.workspace().dispatchEventToListeners(
-        Workspace.Workspace.Events.WorkingCopyCommitted, {uiSourceCode: this, content: content});
-    if (committedByUser) {
-      this._project.workspace().dispatchEventToListeners(
-          Workspace.Workspace.Events.WorkingCopyCommittedByUser, {uiSourceCode: this, content: content});
-    }
+    const data = {uiSourceCode: this, content, encoded: this._contentEncoded};
+    this.dispatchEventToListeners(Workspace.UISourceCode.Events.WorkingCopyCommitted, data);
+    this._project.workspace().dispatchEventToListeners(Workspace.Workspace.Events.WorkingCopyCommitted, data);
+    if (committedByUser)
+      this._project.workspace().dispatchEventToListeners(Workspace.Workspace.Events.WorkingCopyCommittedByUser, data);
   }
 
   /**
@@ -395,8 +392,9 @@ Workspace.UISourceCode = class extends Common.Object {
    * @param {boolean} isBase64
    */
   setContent(content, isBase64) {
+    this._contentEncoded = isBase64;
     if (this._project.canSetFileContent())
-      this._project.setFileContent(this, content, isBase64, function() {});
+      this._project.setFileContent(this, content, isBase64);
     this._contentCommitted(content, true);
   }
 

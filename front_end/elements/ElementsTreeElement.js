@@ -287,7 +287,6 @@ Elements.ElementsTreeElement = class extends UI.TreeElement {
    * @override
    */
   onpopulate() {
-    this.populated = true;
     this.treeOutline.populateTreeElement(this);
   }
 
@@ -810,7 +809,11 @@ Elements.ElementsTreeElement = class extends UI.TreeElement {
       editor.widget().show(this._htmlEditElement);
       editor.setText(initialValue);
       editor.widget().focus();
-      editor.widget().element.addEventListener('blur', this._editing.commit, true);
+      editor.widget().element.addEventListener('blur', event => {
+        // The relatedTarget is null when no element gains focus, e.g. switching windows.
+        if (event.relatedTarget)
+          this._editing.commit();
+      }, true);
       editor.widget().element.addEventListener('keydown', keydown.bind(this), true);
 
       this.treeOutline.setMultilineEditing(this._editing);

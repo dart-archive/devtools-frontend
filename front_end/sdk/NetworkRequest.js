@@ -53,6 +53,8 @@ SDK.NetworkRequest = class extends Common.Object {
     this._initiator = initiator;
     /** @type {?SDK.NetworkRequest} */
     this._redirectSource = null;
+    /** @type {?SDK.NetworkRequest} */
+    this._redirectDestination = null;
     this._issueTime = -1;
     this._startTime = -1;
     this._endTime = -1;
@@ -71,6 +73,9 @@ SDK.NetworkRequest = class extends Common.Object {
     this._initialPriority = null;
     /** @type {?Protocol.Network.ResourcePriority} */
     this._currentPriority = null;
+
+    /** @type {?Protocol.Network.SignedExchangeInfo} */
+    this._signedExchangeInfo = null;
 
     /** @type {!Common.ResourceType} */
     this._resourceType = Common.resourceTypes.Other;
@@ -620,6 +625,20 @@ SDK.NetworkRequest = class extends Common.Object {
   }
 
   /**
+   * @return {?SDK.NetworkRequest}
+   */
+  redirectDestination() {
+    return this._redirectDestination;
+  }
+
+  /**
+   * @param {?SDK.NetworkRequest} redirectDestination
+   */
+  setRedirectDestination(redirectDestination) {
+    this._redirectDestination = redirectDestination;
+  }
+
+  /**
    * @return {!Array.<!SDK.NetworkRequest.NameValue>}
    */
   requestHeaders() {
@@ -840,12 +859,34 @@ SDK.NetworkRequest = class extends Common.Object {
    */
   async _parseFormParameters() {
     const requestContentType = this.requestContentType();
-    if (!requestContentType || !requestContentType.match(/^application\/x-www-form-urlencoded\s*(;.*)?$/i))
+
+    if (!requestContentType)
       return null;
-    const formData = await this.requestFormData();
-    if (formData)
+
+    // Handling application/x-www-form-urlencoded request bodies.
+    if (requestContentType.match(/^application\/x-www-form-urlencoded\s*(;.*)?$/i)) {
+      const formData = await this.requestFormData();
+      if (!formData)
+        return null;
+
       return this._parseParameters(formData);
-    return null;
+    }
+
+    // Handling multipart/form-data request bodies.
+    const multipartDetails = requestContentType.match(/^multipart\/form-data\s*;\s*boundary\s*=\s*(\S+)\s*$/);
+
+    if (!multipartDetails)
+      return null;
+
+    const boundary = multipartDetails[1];
+    if (!boundary)
+      return null;
+
+    const formData = await this.requestFormData();
+    if (!formData)
+      return null;
+
+    return this._parseMultipartFormDataParameters(formData, boundary);
   }
 
   /**
@@ -886,6 +927,58 @@ SDK.NetworkRequest = class extends Common.Object {
         return {name: pair.substring(0, position), value: pair.substring(position + 1)};
     }
     return queryString.split('&').map(parseNameValue);
+  }
+
+  /**
+   * Parses multipart/form-data; boundary=boundaryString request bodies -
+   * --boundaryString
+   * Content-Disposition: form-data; name="field-name"; filename="r.gif"
+   * Content-Type: application/octet-stream
+   *
+   * optionalValue
+   * --boundaryString
+   * Content-Disposition: form-data; name="field-name-2"
+   *
+   * optionalValue2
+   * --boundaryString--
+   *
+   * @param {string} data
+   * @param {string} boundary
+   * @return {!Array.<!SDK.NetworkRequest.NameValue>}
+   */
+  _parseMultipartFormDataParameters(data, boundary) {
+    const sanitizedBoundary = boundary.escapeForRegExp();
+    const keyValuePattern = new RegExp(
+        // Header with an optional file name.
+        '^\\r\\ncontent-disposition\\s*:\\s*form-data\\s*;\\s*name="([^"]*)"(?:\\s*;\\s*filename="([^"]*)")?' +
+            // Optional secondary header with the content type.
+            '(?:\\r\\ncontent-type\\s*:\\s*([^\\r\\n]*))?' +
+            // Padding.
+            '\\r\\n\\r\\n' +
+            // Value
+            '(.*)' +
+            // Padding.
+            '\\r\\n$',
+        'is');
+    const fields = data.split(new RegExp(`--${sanitizedBoundary}(?:--\s*$)?`, 'g'));
+    return fields.reduce(parseMultipartField, []);
+
+    /**
+     * @param {!Array.<!SDK.NetworkRequest.NameValue>} result
+     * @param {string} field
+     * @return {!Array.<!SDK.NetworkRequest.NameValue>}
+     */
+    function parseMultipartField(result, field) {
+      const [match, name, filename, contentType, value] = field.match(keyValuePattern) || [];
+
+      if (!match)
+        return result;
+
+      const processedValue = (filename || contentType) ? ls`(binary)` : value;
+      result.push({name, value: processedValue});
+
+      return result;
+    }
   }
 
   /**
@@ -969,8 +1062,14 @@ SDK.NetworkRequest = class extends Common.Object {
    * @param {boolean} isRegex
    * @return {!Promise<!Array<!Common.ContentProvider.SearchMatch>>}
    */
-  searchInContent(query, caseSensitive, isRegex) {
-    return SDK.NetworkManager.searchInRequest(this, query, caseSensitive, isRegex);
+  async searchInContent(query, caseSensitive, isRegex) {
+    if (!this._contentDataProvider)
+      return SDK.NetworkManager.searchInRequest(this, query, caseSensitive, isRegex);
+
+    const content = await this.requestContent();
+    if (!content)
+      return [];
+    return Common.ContentProvider.performSearchInContent(content, query, caseSensitive, isRegex);
   }
 
   /**
@@ -1020,6 +1119,20 @@ SDK.NetworkRequest = class extends Common.Object {
    */
   priority() {
     return this._currentPriority || this._initialPriority || null;
+  }
+
+  /**
+   * @param {!Protocol.Network.SignedExchangeInfo} info
+   */
+  setSignedExchangeInfo(info) {
+    this._signedExchangeInfo = info;
+  }
+
+  /**
+   * @return {?Protocol.Network.SignedExchangeInfo}
+   */
+  signedExchangeInfo() {
+    return this._signedExchangeInfo;
   }
 
   /**
@@ -1144,7 +1257,8 @@ SDK.NetworkRequest.InitiatorType = {
   Parser: 'parser',
   Redirect: 'redirect',
   Script: 'script',
-  Preload: 'preload'
+  Preload: 'preload',
+  SignedExchange: 'signedExchange'
 };
 
 /** @typedef {!{name: string, value: string}} */

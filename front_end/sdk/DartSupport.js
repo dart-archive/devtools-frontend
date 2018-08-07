@@ -90,7 +90,7 @@ window.$dartExpressionFor = function(executionContext, dartExpression) {
     if (!component.match(looksLikeIdentifier)) {
       return `console.log("%c(Cannot evaluate as a Dart expression, using JS eval)",
           "background-color: hsl(50, 100%, 95%)");
-      ${dartExpression};`;
+      ${dartExpression}`;
     }
   }
   var receiver = components[0];
