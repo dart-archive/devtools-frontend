@@ -67,6 +67,7 @@ var lookupInJSScope = `function lookupInJsScope(name) {
 }`;
 
 var lookupInThis = `function lookupInThis(__this, name) {
+  if (__this === null || __this === undefined) return;
   var found = false;
   let type = dart.getReifiedType(__this) == "NativeJavaScriptObject"
       ? null : dart.getType(__this);
