@@ -71,6 +71,8 @@ var lookupInThis = `function lookupInThis(__this, name) {
   var found = false;
   let type = dart.getReifiedType(__this) == "NativeJavaScriptObject"
       ? null : dart.getType(__this);
+  // If it's not a usable Dart object, return
+  if (type == null) return;
   dart._dhelperRepl(__this, name, (resolvedName) => {
     var f = dart._canonicalMember(__this, resolvedName);
     if (dart.hasField(type, f) || dart.hasGetter(type, f) || dart.hasMethod(type, f)) {
