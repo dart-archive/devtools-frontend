@@ -33,7 +33,7 @@ setTimeout(() => {
   var splitFragment = appUrl.split('#')
   var urlPart = splitFragment[0];
   var fragment = splitFragment.length == 1 ? '' : '#' + splitFragment[1];
-  var fullUrl = appUrl + queryPrefix + extraQueryParameters + fragment;
+  var fullUrl = urlPart + queryPrefix + extraQueryParameters + fragment;
   var app = cdp.New({url: fullUrl});
   app.then(async (o) => {
     var devPage = o.devtoolsFrontendUrl.split('?')[1];
