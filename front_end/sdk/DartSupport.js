@@ -1,6 +1,8 @@
+// Functions specific to Dart support.
+
 // TODO(alanknight): Initialize the namespace properly. Where should
 // that happen?
-Dart = {}
+Dart = {};
 
 /**
  * @implements {UI.ActionDelegate}
@@ -25,7 +27,7 @@ Dart.ReloadActionDelegate = class {
         const executionContext = UI.context.flavor(SDK.ExecutionContext);
         executionContext
           .evaluate(
-              {expression: this.hotRestartCommand},
+            { expression: this.hotRestartCommand },
               /* userGesture */ false,
               /* awaitPromise */ false);
         return true;
@@ -36,7 +38,7 @@ Dart.ReloadActionDelegate = class {
 
 Dart.ToggleSourcemapsActionDelegate = class {
 
-  constructor() {}
+  constructor() { }
 
   /**
    * @override
@@ -56,78 +58,72 @@ Dart.ToggleSourcemapsActionDelegate = class {
   }
 };
 
+/// Convert a Dart expression to JavaScript.
+///
+/// We wrap the expression in a function which provides the local scope
+/// variables. That lets us evaluate the expression as a standalone function and
+/// not try to evaluate in the right scope.
+///
+/// @param {SDK.ExecutionContext} executionContext
+/// @param {string} dartExpression
+/// @return {string} dartExpression compiled to JavaScript
+window.$dartExpressionFor = async function (executionContext, dartExpression) {
+  // If this doesn't look like a Dart expression, bail out. Currently just
+  // checks if it starts with parentheses.
+  // TODO: Check if we're in a JS context, and do something gaenerally better.
+  if (dartExpression.startsWith('(')) return dartExpression;
+  // We can't shadow 'this' with a parameter in JS, so replace references to it
+  // with a variable named THIS.
+  const thisMatcher = /\bthis\b/g;
+  dartExpression = dartExpression.replace(thisMatcher, 'THIS');
 
-(function() {
-var lookupInJSScope = `function lookupInJsScope(name) {
-  try {
-    if (name != window[name] || !(name in window)) {
-      return name;
-    }
-  } catch(e) {}
-}`;
+  const selectedFrame = executionContext.debuggerModel.selectedCallFrame();
+  // We're not stopped at a breakpoint, treat it as JS.
+  if (!selectedFrame) return dartExpression;
+  const evaluation = new Dart._Evaluation(
+      selectedFrame,
+      executionContext,
+      dartExpression,
+      false);
+  const enclosingLibraryName = await evaluation.currentLibrary();
+  if (!enclosingLibraryName) return dartExpression;
 
-var lookupInThis = `function lookupInThis(__this, name) {
-  if (__this === null || __this === undefined) return;
-  var found = false;
-  let type = dart.getReifiedType(__this) == "NativeJavaScriptObject"
-      ? null : dart.getType(__this);
-  // If it's not a usable Dart object, return
-  if (type == null) return;
-  dart._dhelperRepl(__this, name, (resolvedName) => {
-    var f = dart._canonicalMember(__this, resolvedName);
-    if (dart.hasField(type, f) || dart.hasGetter(type, f) || dart.hasMethod(type, f)) {
-      found = true;
-    }
-  });
-  if (found) return name;
-};`;
-
-window.$dartExpressionFor = function(executionContext, dartExpression) {
-  var components = dartExpression.split('.');
-
-  // A crude check if all of our components look like valid Dart
-  // identifiers.  If any of them fail, just return the original
-  // expression and let it be evaluated as Javascript;
-  var looksLikeIdentifier = /^[_\$a-zA-Z0-9]*$/g;
-  for (let component of components) {
-    if (!component.match(looksLikeIdentifier)) {
-      return `console.log("%c(Cannot evaluate as a Dart expression, using JS eval)",
-          "background-color: hsl(50, 100%, 95%)");
-      ${dartExpression}`;
-    }
-  }
-  var receiver = components[0];
-  components.shift();
-  var expression = `
-(function(__this) {
-  // TODO: These should probably be helper functions in the DDC runtime.
-${lookupInJSScope}
-${lookupInThis}
-
-  var dart;
-  if (window.dart_library) {
-    dart = dart_library.import('dart_sdk').dart;
-  } else {
-    // Require is asynchronous, but this seems to work, and
-    // we know dart_sdk will always be present.
-    dart = requirejs('dart_sdk').dart;
-  }
-  var name = "${receiver}";
-  var jsScopeName = lookupInJsScope(name);
-  var thisScopeName = lookupInThis(__this,name);
-  var receiverObject;
-  if (name == "this") {
-    receiverObject = __this;
-  } else if (thisScopeName) {
-    receiverObject = dart.dloadRepl(__this, thisScopeName);
-  }
-  var result = receiverObject || eval(jsScopeName || name);`
-
-  for (let getter of components) {
-    expression += `result = dart.dloadRepl(result, "${getter}");\n`
-  }
-  expression += 'return result;})(this)';
-  return expression;
+  const response = await Dart.fetch(await evaluation.url());
+  const text = await response.text();
+  return text;
 }
 
-})();
+/// Return the environments for [callFrame].
+///
+/// If forCompletion is true then we include 'this' as a valid name.  If
+/// forCompletion is false then we're sending the expression for compilation and
+/// we need to replace 'this' with an alias, since it's a reserved word.
+///
+/// Environment is not defined as a class, but is an anoymous JavaScript object
+/// of the form
+///
+///   {
+///     String title,
+///     String prefix,
+///     List<String> items
+/// }
+///
+/// This will be called by the devtools autocomplete code.
+///
+/// @param {!SDK.DebuggerModel.CallFrame} callFrame
+/// @return {!Promise<?Object>} A List<Environment>.
+Dart.environments = async function (callFrame) {
+  // We don't actually need the executionContext for this, but it's nice
+  // to have it consistently whether we're doing completion or compilation.
+  // In tests we can't do that, so just leave it null.
+  const context = UI ? UI.context.flavor(SDK.ExecutionContext) : null;
+  const evaluation = new Dart._Evaluation(
+      callFrame,
+      context,
+      /* dartExpression */ null,
+      true);
+  return evaluation.environments();
+}
+
+/// Allow us to mock the Http fetch operation in tests.
+Dart.fetch = x => fetch(x);

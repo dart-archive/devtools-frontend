@@ -303,7 +303,7 @@ ObjectUI.JavaScriptAutocomplete = class {
     if (cache && cache.date + TEN_SECONDS > Date.now()) {
       completionGroups = await cache.value;
     } else if (!expressionString && selectedFrame) {
-      cache = {date: Date.now(), value: completionsOnPause(selectedFrame)};
+      cache = {date: Date.now(), value: this.completionsOnPause(selectedFrame)};
       this._expressionCache.set(expressionString, cache);
       completionGroups = await cache.value;
     } else {
@@ -598,10 +598,21 @@ ObjectUI.JavaScriptAutocomplete = class {
   }
 };
 
+ObjectUI.DartAutocomplete = class extends ObjectUI.JavaScriptAutocomplete {
+    /**
+     * @param {!SDK.DebuggerModel.CallFrame} callFrame
+     * @return {!Promise<?Object>}
+     */
+    async completionsOnPause(callFrame) {
+      return Dart.environments(callFrame, true);
+    }
+    // TODO: Provide completionsOnGlobal for when we're not at a breakpoint.
+}
+
 /** @typedef {{title:(string|undefined), items:Array<string>}} */
 ObjectUI.JavaScriptAutocomplete.CompletionGroup;
 
-ObjectUI.javaScriptAutocomplete = new ObjectUI.JavaScriptAutocomplete();
+ObjectUI.javaScriptAutocomplete = new ObjectUI.DartAutocomplete();
 
 ObjectUI.JavaScriptAutocompleteConfig = class {
   /**
