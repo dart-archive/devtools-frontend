@@ -21,15 +21,19 @@ var prefix = process.env["DDT_REPLACE_URL_PREFIX"];
 var replaceParameter = prefix ? "_ddtreplaceprefix=" + encodeURI(prefix) : "";
 var alternate = process.env["DDT_URL_ALTERNATE_PREFIX"];
 var alternateParameter = alternate ? "&_ddtalternate=" + encodeURI(alternate) : "";
-var extraArgs = replaceParameter + alternateParameter;
+var extraQueryParameters = replaceParameter + alternateParameter;
 
 // TODO(vsm): Wait properly for Chrome to start.  For now, waiting 3s.
 setTimeout(() => {
   var appUrl = process.argv[2];
   // If there are no other query parameters, start with a question
   // mark, otherwise, start with an ampersand.
-  var prefix = appUrl.includes('?') ? '&' : '?';
-  var fullUrl = process.argv[2] + prefix + extraArgs;
+  var queryPrefix = appUrl.includes('?') ? '&' : '?';
+  // If there's a fragment we need to put it after the query parameters.
+  var splitFragment = appUrl.split('#')
+  var urlPart = splitFragment[0];
+  var fragment = splitFragment.length == 1 ? '' : '#' + splitFragment[1];
+  var fullUrl = appUrl + queryPrefix + extraQueryParameters + fragment;
   var app = cdp.New({url: fullUrl});
   app.then(async (o) => {
     var devPage = o.devtoolsFrontendUrl.split('?')[1];
