@@ -19,3 +19,6 @@
  * Download and check-in the files that are normally read from the
    chrome-devtools-frontend site, in the interests of having this entirely
    statically serveable. Those files will need to be updated for Chrome changes.
+ * When blackboxing the SDK it doesn't stop on Dart exceptions, since they're in
+   blackboxed source. Set the blackbox by source range to get around this. This
+   isn't visible in the UI, so it's hard-coded.
