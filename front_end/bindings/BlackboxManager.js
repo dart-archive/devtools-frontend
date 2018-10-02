@@ -32,8 +32,8 @@ Bindings.BlackboxManager = class {
     // Initialize Dart patterns.
     const regexPatterns = Common.moduleSetting('skipStackFramesPattern').getAsArray();
     const oldPatterns = regexPatterns.map((p) => p.pattern);
+    // Note that we don't blackbox the Dart SDK here, we do it based on ranges in _addScript
     const dartPatterns = [
-      '\/dart_sdk\.js\\b',
       '\/ng_zone\.dart$',
       '\/stack_zone_specification\.dart$',
     ];
@@ -341,7 +341,63 @@ Bindings.BlackboxManager = class {
     if (!script.sourceURL && !script.sourceMapURL)
       return Promise.resolve();
     const blackboxed = this._isBlackboxedScript(script);
-    return this._setScriptState(script, blackboxed ? [{lineNumber: 0, columnNumber: 0}] : []);
+    var ranges =  blackboxed ? [{lineNumber: 0, columnNumber: 0}] : [];
+    if (script.sourceURL.includes('dart_sdk.js')) {
+      return this._blackboxDartSDK(script);
+    } else {
+      return this._setScriptState(script, ranges);
+    }
+  }
+
+  /// Blackbox the Dart SDK, but specifically omit the range that defines
+  /// dart.throw and dart.rethrow.
+  ///
+  /// @param {!SDK.Script script}
+  /// @return {!Promise<undefined>}
+  _blackboxDartSDK(script) {
+    // Since this is called a result of registering the SDK script, we assume
+    // it's found and will be served from cache, so we don't even bother to
+    // check for status or errors.
+    //
+    // TODO(alanknight): Is there a better way to ask for this than to load it
+    // and assume it comes from cache? And is the network manager the best thing
+    // to use?
+    return SDK.multitargetNetworkManager.loadResource(script.sourceURL,
+      (status, headers, content) => { findAndBlackbox(script, content, this); });
+
+    /// Create a range object for the blackbox ranges, with the given line number.
+    function _line(lineNumber) {
+      return {lineNumber: lineNumber, columnNumber: 0};
+    }
+
+    // We are given the script for the Dart SDK, the content, and the enclosing
+    // "this". Find the dart.throw definition by splitting the content into
+    // lines and looking for where it starts, and assuming it's the next few
+    // lines.
+    //
+    // TODO(alanknight): Actually get this information from DDC instead
+    // of jumping through this expensive hoop.
+    //
+    // @param {!SDK.Script script}
+    // @param {!string content}
+    // @param {!SDK.BlackboxManager manager} The closure doesn't see 'this', so
+    // pass it in.
+    function findAndBlackbox(script, content, manager) {
+      const sdkLines = content.split('\n');
+      for (var line = 0; line < sdkLines.length; line++) {
+        const text = sdkLines[line];
+        // This will obviously break if DDC compilation changes this literal.
+        if (text == '  dart.throw = function(obj) {') {
+          // Ranges array contains positions in script where blackbox state is
+          // changed. [(0,0) ... ranges[0]) isn't blackboxed, [ranges[0]
+          // ... ranges[1]) is blackboxed...
+          //
+          // Being a bit liberal with the range to make sure we get it.
+          var ranges = [ _line(0), _line(line - 1), _line(line + 6)];
+          return manager._setScriptState(script, ranges);
+        }
+      }
+    }
   }
 
   /**
@@ -393,7 +449,6 @@ Bindings.BlackboxManager = class {
       if (positions.length === 0)
         return Promise.resolve().then(updateState.bind(this, false));
     }
-
     return script.setBlackboxedRanges(positions).then(updateState.bind(this));
 
     /**
