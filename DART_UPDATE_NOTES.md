@@ -1,5 +1,7 @@
 # Dart Update Notes
 
+To update the Google internal version of this code, see go/updateddt
+
 In the interests of making this package simply served from a static web server, we have downloaded and checked in four files which are normally retrieved from the https://chrome-devtools-frontend.appspot.com site. These files are
  * favicon.ico
  * ARIAProperties.js
