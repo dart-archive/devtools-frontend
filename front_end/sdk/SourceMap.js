@@ -324,7 +324,7 @@ SDK.TextSourceMap = class {
     const mappings = this.mappings();
     const index = mappings.upperBound(
         undefined, (unused, entry) => lineNumber - entry.lineNumber || columnNumber - entry.columnNumber);
-    return index ? mappings[index - 1] : null;
+    return index === null ? null : mappings[Math.max(0, index - 1)];
   }
 
   /**
