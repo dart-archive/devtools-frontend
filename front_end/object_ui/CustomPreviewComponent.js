@@ -13,6 +13,7 @@ ObjectUI.CustomPreviewSection = class {
     this._object = object;
     this._expanded = false;
     this._cachedContent = null;
+    this._linkifier = new Components.Linkifier(150, true); // Required for DDT embedded links
     const customPreview = object.customPreview();
 
     let headerJSON;
@@ -96,7 +97,7 @@ ObjectUI.CustomPreviewSection = class {
     if (remoteObject.customPreview())
       return (new ObjectUI.CustomPreviewSection(remoteObject)).element();
 
-    const sectionElement = ObjectUI.ObjectPropertiesSection.defaultObjectPresentation(remoteObject);
+    const sectionElement = ObjectUI.ObjectPropertiesSection.defaultObjectPresentation(remoteObject, this._linkifier);
     sectionElement.classList.toggle('custom-expandable-section-standard-section', remoteObject.hasChildren);
     return sectionElement;
   }
@@ -213,6 +214,28 @@ ObjectUI.CustomPreviewComponent = class {
     this.element = createElementWithClass('span', 'source-code');
     const shadowRoot = UI.createShadowRootWithCoreStyles(this.element, 'object_ui/customPreviewComponent.css');
     this.element.addEventListener('contextmenu', this._contextMenuEventFired.bind(this), false);
+    this._linkifier = new Components.Linkifier(150, true); // Required for DDT embedded links
+
+    // DDT-specific operation to linkify an object's displayed runtime type
+    // Performed on all remote objects for which the following is resolvable:
+    // remoteObj["runtimeType"][Symbol(_type)]["[[FunctionLocation]]"]
+    var functionLocationPath = ["runtimeType", "Symbol(_type)", "[[FunctionLocation]]"];
+    this._object.customGetProperty(functionLocationPath, (internalProperty) => {
+      var location = internalProperty.value;
+      const rawLocation = this._object.debuggerModel().createRawLocationByScriptId(
+          location.scriptId, location.lineNumber + 1, location.columnNumber);
+      var link = this._linkifier.linkifyRawLocation(rawLocation, '');
+      var linkContainer = createElementWithClass('span', 'function-title-link-container');
+      linkContainer.appendChild(link);
+      // We assume only the first text node must be linkified
+      for (const node of this._customPreviewSection._header.childNodes) {
+        if (node.nodeType === Node.TEXT_NODE) {
+          link.textContent = node.textContent;
+          this._customPreviewSection._header.replaceChild(linkContainer, node);
+          return;
+        }
+      }
+    });
     shadowRoot.appendChild(this._customPreviewSection.element());
   }
 
@@ -237,7 +260,7 @@ ObjectUI.CustomPreviewComponent = class {
   _disassemble() {
     this.element.shadowRoot.textContent = '';
     this._customPreviewSection = null;
-    this.element.shadowRoot.appendChild(ObjectUI.ObjectPropertiesSection.defaultObjectPresentation(this._object));
+    this.element.shadowRoot.appendChild(ObjectUI.ObjectPropertiesSection.defaultObjectPresentation(this._object, this._linkifier));
   }
 };
 
