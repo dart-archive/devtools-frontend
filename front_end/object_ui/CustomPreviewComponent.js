@@ -31,8 +31,8 @@ ObjectUI.CustomPreviewSection = class {
 
     if (customPreview.hasBody) {
       this._header.classList.add('custom-expandable-section-header');
-      this._header.addEventListener('click', this._onClick.bind(this), false);
       this._expandIcon = UI.Icon.create('smallicon-triangle-right', 'custom-expand-icon');
+      this._expandIcon.addEventListener('click', this._onClick.bind(this), false);
       this._header.insertBefore(this._expandIcon, this._header.firstChild);
     }
 
@@ -221,18 +221,19 @@ ObjectUI.CustomPreviewComponent = class {
     // remoteObj["runtimeType"][Symbol(_type)]["[[FunctionLocation]]"]
     var functionLocationPath = ["runtimeType", "Symbol(_type)", "[[FunctionLocation]]"];
     this._object.customGetProperty(functionLocationPath, (internalProperty) => {
-      var location = internalProperty.value;
+      let location = internalProperty.value;
       const rawLocation = this._object.debuggerModel().createRawLocationByScriptId(
           location.scriptId, location.lineNumber + 1, location.columnNumber);
-      var link = this._linkifier.linkifyRawLocation(rawLocation, '');
+      var link = createElementWithClass('span', 'linkified devtools-link'); 
+      link.addEventListener('click', () => Common.Revealer.reveal(rawLocation) && false);
       var linkContainer = createElementWithClass('span', 'function-title-link-container');
       linkContainer.appendChild(link);
-      // We assume only the first text node must be linkified
+      // Assume only the first text node contains the type text to be linkified
       for (const node of this._customPreviewSection._header.childNodes) {
         if (node.nodeType === Node.TEXT_NODE) {
           link.textContent = node.textContent;
           this._customPreviewSection._header.replaceChild(linkContainer, node);
-          return;
+          break;
         }
       }
     });
