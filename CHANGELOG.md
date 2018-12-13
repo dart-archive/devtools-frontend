@@ -22,3 +22,8 @@
  * When blackboxing the SDK it doesn't stop on Dart exceptions, since they're in
    blackboxed source. Set the blackbox by source range to get around this. This
    isn't visible in the UI, so it's hard-coded.
+ * Adding dart links to runtime types for objects
+ * Fixed a bug resulting in links not being generated whenever the first entry
+   in the source map is selected
+ * Updated the source map entry selection algorithm to sometimes favor entries
+   sequentially farther in the source map.
