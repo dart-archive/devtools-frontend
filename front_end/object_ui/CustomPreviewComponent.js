@@ -223,7 +223,7 @@ ObjectUI.CustomPreviewComponent = class {
     this._object.customGetProperty(functionLocationPath, (internalProperty) => {
       let location = internalProperty.value;
       const rawLocation = this._object.debuggerModel().createRawLocationByScriptId(
-          location.scriptId, location.lineNumber + 1, location.columnNumber);
+          location.scriptId, location.lineNumber, location.columnNumber);
       var link = createElementWithClass('span', 'linkified devtools-link'); 
       link.addEventListener('click', () => Common.Revealer.reveal(rawLocation) && false);
       var linkContainer = createElementWithClass('span', 'function-title-link-container');
