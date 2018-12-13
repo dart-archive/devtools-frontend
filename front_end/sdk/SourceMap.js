@@ -324,7 +324,15 @@ SDK.TextSourceMap = class {
     const mappings = this.mappings();
     const index = mappings.upperBound(
         undefined, (unused, entry) => lineNumber - entry.lineNumber || columnNumber - entry.columnNumber);
-    return index === null ? null : mappings[Math.max(0, index - 1)];
+    // Mappings at index and index - 1 correspond to the two closest map entries
+    // if applicable. We pick the closest one (tiebreak, the earlier one) now.
+    if (index === null) return null;
+    var earlierEntry = mappings[Math.max(0, index - 1)];
+    var laterEntry = mappings[index];
+    if (laterEntry == null) return earlierEntry;
+    if (Math.abs(earlierEntry.lineNumber - lineNumber) <= Math.abs(laterEntry.lineNumber - lineNumber))
+      return earlierEntry;
+    return laterEntry;
   }
 
   /**
