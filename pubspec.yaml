@@ -1,6 +1,6 @@
 name: dart_devtools
 description: DDC debugging tool based on Chrome DevTools
-version: 0.0.1
+publish_to: none
 homepage: https://github.com/dart-lang/devtools-frontend
 author: Dart Team <misc@dartlang.org>
 
