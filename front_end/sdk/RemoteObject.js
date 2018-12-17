@@ -346,30 +346,6 @@ SDK.RemoteObject = class {
   }
 
   /**
-   * @param {string} property
-   * @param {function(?SDK.RemoteObject)} callback
-   */
-  getInternalProperty(property, callback) {
-    throw 'Not implemented';
-  }
-
-  /**
-   * @param {string} symbol
-   * @param {function(?SDK.RemoteObject)} callback
-   */
-  getSymbol(symbol, callback) {
-    throw 'Not implemented';
-  }
-
-  /**
-   * @param {!Array.<string>} propertyPath
-   * @param {function(?SDK.RemoteObject)} callback
-   */
-  customGetProperty(propertyPath, callback) {
-    throw 'Not implemented';
-  }
-
-  /**
    * @param {!Protocol.Runtime.CallArgument} name
    * @return {!Promise<string|undefined>}
    */
@@ -646,48 +622,6 @@ SDK.RemoteObjectImpl = class extends SDK.RemoteObject {
   }
 
   /**
-   * @override
-   * @param {string} property
-   * @param {function(?SDK.RemoteObject)} callback
-   */
-  getInternalProperty(property, callback) {
-    this.getAllProperties(false, false, (_, internalProperties) => {
-      if (!internalProperties) {
-        callback(null);
-        return;
-      }
-      for (const internalProperty of internalProperties) {
-        if (internalProperty.name === property) {
-          callback(internalProperty.value);
-          return;
-        }
-      }
-      callback(null);
-    });
-  }
-
-  /**
-   * @override
-   * @param {string} symbol
-   * @param {function(?SDK.RemoteObject)} callback
-   */
-  getSymbol(symbol, callback) {
-    this.getAllProperties(false, false, (properties) => {
-      if (!properties) {
-        callback(null);
-        return;
-      }
-      for (const property of properties) {
-        if (property.name === symbol || property.name === "Symbol(" + symbol + ")") {
-          callback(property.value);
-          return;
-        }
-      }
-      callback(null);
-    });
-  }
-
-  /**
    * @param {boolean} ownProperties
    * @param {boolean} accessorPropertiesOnly
    * @param {boolean} generatePreview
@@ -798,41 +732,6 @@ SDK.RemoteObjectImpl = class extends SDK.RemoteObject {
         {objectId: this._objectId, functionDeclaration: setPropertyValueFunction, arguments: argv, silent: true});
     const error = response[Protocol.Error];
     return error || response.exceptionDetails ? error || response.result.description : undefined;
-  }
-
-  /**
-   * Provides access to properties, internal properties, and symbols.
-   * Internal properties are enclosed in double square brackets
-   * Symbol properties are enclosed by "Symbol(" and ")"
-   * @override
-   * @param {!Array.<string>} propertyPath
-   * @param {function(?SDK.RemoteObject)} callback
-   */
-  customGetProperty(propertyPath, callback) {
-    _customGetProperty(this, propertyPath, callback);
-
-    /**
-     * @param {?SDK.RemoteObject} object
-     * @param {!Array.<string>} propertyPath
-     * @param {function(?SDK.RemoteObject)} callback
-     */
-    function _customGetProperty(object, propertyPath, callback) {
-      if (object == null) return;
-      if (!Array.isArray(propertyPath) || !propertyPath.length) {
-        callback(object);
-        return;
-      }
-      let property = propertyPath.shift();
-      let _callback = (propertyObject) => {
-        _customGetProperty(propertyObject, propertyPath, callback);
-      };
-      if (property.startsWith("[[") && property.endsWith("]]"))
-        object.getInternalProperty(property, _callback);
-      else if (property.startsWith("Symbol(") && property.endsWith(")"))
-        object.getSymbol(property, _callback);
-      else
-        object.getProperty([property], _callback);
-    }
   }
 
   /**
