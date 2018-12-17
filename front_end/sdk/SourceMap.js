@@ -329,9 +329,12 @@ SDK.TextSourceMap = class {
     if (index === null) return null;
     var earlierEntry = mappings[Math.max(0, index - 1)];
     var laterEntry = mappings[index];
-    if (laterEntry == null) return earlierEntry;
-    if (Math.abs(earlierEntry.lineNumber - lineNumber) <= Math.abs(laterEntry.lineNumber - lineNumber))
+    if (laterEntry == null) {
       return earlierEntry;
+    }
+    if (Math.abs(earlierEntry.lineNumber - lineNumber) <= Math.abs(laterEntry.lineNumber - lineNumber)) {
+      return earlierEntry;
+    }
     return laterEntry;
   }
 
