@@ -13,7 +13,6 @@ ObjectUI.CustomPreviewSection = class {
     this._object = object;
     this._expanded = false;
     this._cachedContent = null;
-    this._linkifier = new Components.Linkifier(150, true); // Required for DDT embedded links
     const customPreview = object.customPreview();
 
     let headerJSON;
@@ -97,7 +96,7 @@ ObjectUI.CustomPreviewSection = class {
     if (remoteObject.customPreview())
       return (new ObjectUI.CustomPreviewSection(remoteObject)).element();
 
-    const sectionElement = ObjectUI.ObjectPropertiesSection.defaultObjectPresentation(remoteObject, this._linkifier);
+    const sectionElement = ObjectUI.ObjectPropertiesSection.defaultObjectPresentation(remoteObject);
     sectionElement.classList.toggle('custom-expandable-section-standard-section', remoteObject.hasChildren);
     return sectionElement;
   }
@@ -214,28 +213,36 @@ ObjectUI.CustomPreviewComponent = class {
     this.element = createElementWithClass('span', 'source-code');
     const shadowRoot = UI.createShadowRootWithCoreStyles(this.element, 'object_ui/customPreviewComponent.css');
     this.element.addEventListener('contextmenu', this._contextMenuEventFired.bind(this), false);
-    this._linkifier = new Components.Linkifier(150, true); // Required for DDT embedded links
 
     // DDT-specific operation to linkify an object's displayed runtime type
     // Performed on all remote objects for which the following is resolvable:
-    // remoteObj["runtimeType"][Symbol(_type)]["[[FunctionLocation]]"]
-    var functionLocationPath = ["runtimeType", "Symbol(_type)", "[[FunctionLocation]]"];
-    this._object.customGetProperty(functionLocationPath, (internalProperty) => {
-      let location = internalProperty.value;
-      const rawLocation = this._object.debuggerModel().createRawLocationByScriptId(
-          location.scriptId, location.lineNumber, location.columnNumber);
-      var link = createElementWithClass('span', 'linkified devtools-link'); 
-      link.addEventListener('click', () => Common.Revealer.reveal(rawLocation) && false);
-      var linkContainer = createElementWithClass('span', 'function-title-link-container');
-      linkContainer.appendChild(link);
-      // Assume only the first text node contains the type text to be linkified
-      for (const node of this._customPreviewSection._header.childNodes) {
-        if (node.nodeType === Node.TEXT_NODE) {
-          link.textContent = node.textContent;
-          this._customPreviewSection._header.replaceChild(linkContainer, node);
-          break;
+    // (Javascript) remoteObj["runtimeType"][Symbol(_type)]["[[FunctionLocation]]"]
+    // In Dart, this corresponds to an object's constructor's function location
+    let remoteFunction = "function remoteFunction() { " +
+        "return dart_library.debuggerLibraries()[0][\"dart\"].getReifiedType(this); }";
+    this._object._runtimeAgent.invoke_callFunctionOn({
+      objectId: this._object._objectId,
+      functionDeclaration: remoteFunction,
+      arguments: [],
+      silent: true,
+      returnByValue: false
+    }).then((remoteFunctionResult) => {
+      let remoteObject = this._object.runtimeModel().createRemoteObject(remoteFunctionResult.result);
+      remoteObject.debuggerModel().functionDetailsPromise(remoteObject).then((response) => {
+        if (response.location === undefined) return;
+        // Manually creating a link because formatting functions such as
+        // formatObjectAsFunction don't preserve the custom formatter's content.
+        let typeLink = createElementWithClass('span', 'linkified devtools-link');
+        typeLink.addEventListener('click', () => Common.Revealer.reveal(response.location) && false);
+        // We assume the type text exists on the header's first text node.
+        for (const node of this._customPreviewSection._header.childNodes) {
+          if (node.nodeType === Node.TEXT_NODE) {
+            typeLink.textContent = node.textContent;
+            this._customPreviewSection._header.replaceChild(typeLink, node);
+            break;
+          }
         }
-      }
+      });
     });
     shadowRoot.appendChild(this._customPreviewSection.element());
   }
@@ -261,7 +268,7 @@ ObjectUI.CustomPreviewComponent = class {
   _disassemble() {
     this.element.shadowRoot.textContent = '';
     this._customPreviewSection = null;
-    this.element.shadowRoot.appendChild(ObjectUI.ObjectPropertiesSection.defaultObjectPresentation(this._object, this._linkifier));
+    this.element.shadowRoot.appendChild(ObjectUI.ObjectPropertiesSection.defaultObjectPresentation(this._object));
   }
 };
 
