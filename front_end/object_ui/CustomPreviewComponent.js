@@ -31,6 +31,8 @@ ObjectUI.CustomPreviewSection = class {
     if (customPreview.hasBody) {
       this._header.classList.add('custom-expandable-section-header');
       this._expandIcon = UI.Icon.create('smallicon-triangle-right', 'custom-expand-icon');
+      // DDT: Moving this event listener from the entire header to just the icon
+      // so to not shadow object links.
       this._expandIcon.addEventListener('click', this._onClick.bind(this), false);
       this._header.insertBefore(this._expandIcon, this._header.firstChild);
     }
@@ -214,35 +216,39 @@ ObjectUI.CustomPreviewComponent = class {
     const shadowRoot = UI.createShadowRootWithCoreStyles(this.element, 'object_ui/customPreviewComponent.css');
     this.element.addEventListener('contextmenu', this._contextMenuEventFired.bind(this), false);
 
-    // DDT-specific operation to linkify an object's displayed runtime type
-    // Performed on all remote objects for which the following is resolvable:
-    // (Javascript) remoteObj["runtimeType"][Symbol(_type)]["[[FunctionLocation]]"]
-    // In Dart, this corresponds to an object's constructor's function location
-    let remoteFunction = "function remoteFunction() { " +
-        "return dart_library.debuggerLibraries()[0][\"dart\"].getReifiedType(this); }";
+    // DDT: Creates a link from objects to their runtime type's source
+    let remoteFunction = "function() { " +
+        "return dart_library"
+        ".debuggerLibraries()[0][\"dart\"]" +
+        ".getReifiedType(this); }";
     this._object._runtimeAgent.invoke_callFunctionOn({
+      // objectId corresponds to 'this' in functionDeclaration's context
       objectId: this._object._objectId,
       functionDeclaration: remoteFunction,
       arguments: [],
       silent: true,
       returnByValue: false
-    }).then((remoteFunctionResult) => {
-      let remoteObject = this._object.runtimeModel().createRemoteObject(remoteFunctionResult.result);
-      remoteObject.debuggerModel().functionDetailsPromise(remoteObject).then((response) => {
-        if (response.location === undefined) return;
-        // Manually creating a link because formatting functions such as
-        // formatObjectAsFunction don't preserve the custom formatter's content.
-        let typeLink = createElementWithClass('span', 'linkified devtools-link');
-        typeLink.addEventListener('click', () => Common.Revealer.reveal(response.location) && false);
-        // We assume the type text exists on the header's first text node.
-        for (const node of this._customPreviewSection._header.childNodes) {
-          if (node.nodeType === Node.TEXT_NODE) {
-            typeLink.textContent = node.textContent;
-            this._customPreviewSection._header.replaceChild(typeLink, node);
-            break;
-          }
+    }).then(async (remoteFunctionResult) => {
+      let remoteObject = this._object.runtimeModel()
+          .createRemoteObject(remoteFunctionResult.result);
+      let functionDetails = (await remoteObject
+          .debuggerModel()
+          .functionDetailsPromise(remoteObject));
+      let functionLocation = functionDetails.location;
+      if (functionLocation === undefined) return;
+      // Manually creating a link because formatting functions such as
+      // formatObjectAsFunction don't preserve the custom formatter's content.
+      let typeLink = createElementWithClass('span', 'linkified devtools-link');
+      typeLink.addEventListener('click',
+          () => Common.Revealer.reveal(functionLocation) && false);
+      // We assume the type text exists on the header's first text node.
+      for (const node of this._customPreviewSection._header.childNodes) {
+        if (node.nodeType === Node.TEXT_NODE) {
+          typeLink.textContent = node.textContent;
+          this._customPreviewSection._header.replaceChild(typeLink, node);
+          break;
         }
-      });
+      }
     });
     shadowRoot.appendChild(this._customPreviewSection.element());
   }
