@@ -119,6 +119,7 @@ FormatterWorker.evaluatableJavaScriptSubstring = function(content) {
     const startIndex = token.start;
     let endIndex = token.end;
     let openBracketsCounter = 0;
+    let openParensCounter = 0;
     while (token.type !== acorn.tokTypes.eof) {
       const isIdentifier = FormatterWorker.AcornTokenizer.identifier(token);
       const isThis = FormatterWorker.AcornTokenizer.keyword(token, 'this');
@@ -128,7 +129,7 @@ FormatterWorker.evaluatableJavaScriptSubstring = function(content) {
 
       endIndex = token.end;
       token = tokenizer.getToken();
-      while (FormatterWorker.AcornTokenizer.punctuator(token, '.[]')) {
+      while (FormatterWorker.AcornTokenizer.punctuator(token, '.[]()')) {
         if (FormatterWorker.AcornTokenizer.punctuator(token, '['))
           openBracketsCounter++;
 
@@ -137,10 +138,24 @@ FormatterWorker.evaluatableJavaScriptSubstring = function(content) {
           openBracketsCounter--;
         }
 
+        if (FormatterWorker.AcornTokenizer.punctuator(token, '('))
+          openParensCounter++;
+
+        if (FormatterWorker.AcornTokenizer.punctuator(token, ')')) {
+          endIndex = openParensCounter > 0 ? token.end : endIndex;
+          openParensCounter--;
+        }
+
         token = tokenizer.getToken();
       }
     }
-    result = content.substring(startIndex, endIndex);
+    // Only evaluate if the highlighted region looks like a valid
+    // expression.  E.g., in Dart, "x + y" sometimes maps to
+    // "x) + dart.notNull(y)" and is confusingly pruned to "x".
+    if (openBracketsCounter == 0 && openParensCounter == 0)
+      result = content.substring(startIndex, endIndex);
+    else
+      result = "'<unknown>'";
   } catch (e) {
     console.error(e);
   }
