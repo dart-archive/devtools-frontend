@@ -60,7 +60,7 @@ Main.Main = class {
 
   async _loaded() {
     console.timeStamp('Main._loaded');
-    await Runtime.runtimeReady();
+    await Runtime.appStarted();
     Runtime.setPlatform(Host.platform());
     InspectorFrontendHost.getPreferences(this._gotPreferences.bind(this));
   }
@@ -108,7 +108,8 @@ Main.Main = class {
     Runtime.experiments.register('applyCustomStylesheet', 'Allow custom UI themes');
     Runtime.experiments.register('blackboxJSFramesOnTimeline', 'Blackbox JavaScript frames on Timeline', true);
     Runtime.experiments.register('colorContrastRatio', 'Color contrast ratio line in color picker', true);
-    Runtime.experiments.register('consoleBelowPrompt', 'Eager evaluation');
+    Runtime.experiments.register('consoleBelowPrompt', 'Console eager evaluation');
+    Runtime.experiments.register('consoleKeyboardNavigation', 'Console keyboard navigation', true);
     Runtime.experiments.register('emptySourceMapAutoStepping', 'Empty sourcemap auto-stepping');
     Runtime.experiments.register('inputEventsOnTimelineOverview', 'Input events on Timeline overview', true);
     Runtime.experiments.register('nativeHeapProfiler', 'Native memory sampling heap profiler', true);
@@ -116,7 +117,9 @@ Main.Main = class {
     Runtime.experiments.register('oopifInlineDOM', 'OOPIF: inline DOM ', true);
     Runtime.experiments.register('pinnedExpressions', 'Pinned expressions in Console', true);
     Runtime.experiments.register('protocolMonitor', 'Protocol Monitor');
+    Runtime.experiments.register('samplingHeapProfilerTimeline', 'Sampling heap profiler timeline', true);
     Runtime.experiments.register('sourceDiff', 'Source diff');
+    Runtime.experiments.register('sourcesLogpoints', 'Sources: logpoints');
     Runtime.experiments.register('sourcesPrettyPrint', 'Automatically pretty print in the Sources Panel');
     Runtime.experiments.register(
         'stepIntoAsync', 'Introduce separate step action, stepInto becomes powerful enough to go inside async call');
@@ -127,10 +130,10 @@ Main.Main = class {
     Runtime.experiments.register('timelineEventInitiators', 'Timeline: event initiators');
     Runtime.experiments.register('timelineFlowEvents', 'Timeline: flow events', true);
     Runtime.experiments.register('timelineInvalidationTracking', 'Timeline: invalidation tracking', true);
-    Runtime.experiments.register('timelinePaintTimingMarkers', 'Timeline: paint timing markers', true);
     Runtime.experiments.register('timelineShowAllEvents', 'Timeline: show all events', true);
     Runtime.experiments.register('timelineTracingJSProfile', 'Timeline: tracing based JS profiler', true);
     Runtime.experiments.register('timelineV8RuntimeCallStats', 'Timeline: V8 Runtime Call Stats on Timeline', true);
+    Runtime.experiments.register('timelineWebGL', 'Timeline: WebGL-based flamechart');
 
     Runtime.experiments.cleanUpStaleExperiments();
 
@@ -142,11 +145,15 @@ Main.Main = class {
       if (testPath.indexOf('network/') !== -1)
         Runtime.experiments.enableForTest('networkSearch');
       if (testPath.indexOf('console/viewport-testing/') !== -1)
-        Runtime.experiments.enableForTest('consoleBelowPrompt');
+        Runtime.experiments.enableForTest('consoleKeyboardNavigation');
+      if (testPath.indexOf('console/') !== -1)
+        Runtime.experiments.enableForTest('pinnedExpressions');
     }
 
-    Runtime.experiments.setDefaultExperiments(
-        ['colorContrastRatio', 'stepIntoAsync', 'oopifInlineDOM', 'consoleBelowPrompt', 'timelineTracingJSProfile']);
+    Runtime.experiments.setDefaultExperiments([
+      'colorContrastRatio', 'stepIntoAsync', 'oopifInlineDOM', 'consoleBelowPrompt', 'timelineTracingJSProfile',
+      'pinnedExpressions', 'consoleKeyboardNavigation'
+    ]);
   }
 
   /**
@@ -268,7 +275,7 @@ Main.Main = class {
     const instances =
         await Promise.all(self.runtime.extensions('early-initialization').map(extension => extension.instance()));
     for (const instance of instances)
-      /** @type {!Common.Runnable} */ (instance).run();
+      await /** @type {!Common.Runnable} */ (instance).run();
     // Used for browser tests.
     InspectorFrontendHost.readyForTest();
     // Asynchronously run the extensions.
@@ -516,7 +523,8 @@ Main.Main.MainMenuItem = class {
           'Placement of DevTools relative to the page. (%s to restore last position)', toggleDockSideShorcuts[0].name);
       dockItemElement.appendChild(titleElement);
       const dockItemToolbar = new UI.Toolbar('', dockItemElement);
-      dockItemToolbar.makeBlueOnHover();
+      if (Host.isMac() && !UI.themeSupport.hasTheme())
+        dockItemToolbar.makeBlueOnHover();
       const undock = new UI.ToolbarToggle(Common.UIString('Undock into separate window'), 'largeicon-undock');
       const bottom = new UI.ToolbarToggle(Common.UIString('Dock to bottom'), 'largeicon-dock-to-bottom');
       const right = new UI.ToolbarToggle(Common.UIString('Dock to right'), 'largeicon-dock-to-right');
@@ -553,7 +561,7 @@ Main.Main.MainMenuItem = class {
     }
 
     if (Components.dockController.dockSide() === Components.DockController.State.Undocked &&
-        SDK.targetManager.mainTarget() && SDK.targetManager.mainTarget().hasBrowserCapability())
+        SDK.targetManager.mainTarget() && SDK.targetManager.mainTarget().type() === SDK.Target.Type.Frame)
       contextMenu.defaultSection().appendAction('inspector_main.focus-debuggee', Common.UIString('Focus debuggee'));
 
     contextMenu.defaultSection().appendAction(
@@ -607,7 +615,7 @@ Main.Main.PauseListener = class {
  */
 Main.sendOverProtocol = function(method, params) {
   return new Promise((resolve, reject) => {
-    Protocol.InspectorBackend.sendRawMessageForTesting(method, params, (err, ...results) => {
+    Protocol.test.sendRawMessage(method, params, (err, ...results) => {
       if (err)
         return reject(err);
       return resolve(results);

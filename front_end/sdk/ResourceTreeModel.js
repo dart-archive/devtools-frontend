@@ -403,14 +403,13 @@ SDK.ResourceTreeModel = class extends SDK.SDKModel {
   }
 
   /**
-   * @param {function(string, ?string, !Array<!Protocol.Page.AppManifestError>)} callback
+   * @return {!Promise<{url: string, data: ?string, errors: !Array<!Protocol.Page.AppManifestError>}>}
    */
-  async fetchAppManifest(callback) {
+  async fetchAppManifest() {
     const response = await this._agent.invoke_getAppManifest({});
     if (response[Protocol.Error])
-      callback(response.url, null, []);
-    else
-      callback(response.url, response.data || null, response.errors);
+      return {url: response.url, data: null, errors: []};
+    return {url: response.url, data: response.data || null, errors: response.errors};
   }
   /**
    * @param {!SDK.ExecutionContext} a
@@ -941,5 +940,13 @@ SDK.PageDispatcher = class {
    * @param {boolean} userGesture
    */
   windowOpen(url, windowName, windowFeatures, userGesture) {
+  }
+
+  /**
+   * @override
+   * @param {string} url
+   * @param {string} data
+   */
+  compilationCacheProduced(url, data) {
   }
 };

@@ -36,6 +36,14 @@ ElementsTestRunner.nodeWithId = function(idValue, callback) {
 };
 
 /**
+ * @param {string} idValue
+ * @param {!Function} callback
+ */
+ElementsTestRunner.nodeWithIdPromise = function(idValue) {
+  return new Promise(resolve => ElementsTestRunner.findNode(node => node.getAttribute('id') === idValue, resolve));
+};
+
+/**
  * @param {function(!Element): boolean} matchFunction
  * @param {!Function} callback
  */
@@ -82,6 +90,14 @@ ElementsTestRunner.findNode = async function(matchFunction, callback) {
   const doc = TestRunner.domModel.existingDocument() || await TestRunner.domModel.requestDocument();
   pendingRequests++;
   doc.getChildNodes(processChildren.bind(null, doc));
+};
+
+/**
+ * @param {function(!Element): boolean} matchFunction
+ * @param {!Promise}
+ */
+ElementsTestRunner.findNodePromise = function(matchFunction) {
+  return new Promise(resolve => ElementsTestRunner.findNode(matchFunction, resolve));
 };
 
 /**

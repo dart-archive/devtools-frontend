@@ -483,7 +483,7 @@ Elements.ElementsPanel = class extends UI.Panel {
         const node = this.selectedDOMNode();
         if (!node)
           return false;
-        const preview = await BrowserComponents.ImagePreview.build(
+        const preview = await Components.ImagePreview.build(
             node.domModel().target(), link[Elements.ElementsTreeElement.HrefSymbol], true);
         if (preview)
           popover.contentElement.appendChild(preview);
@@ -932,14 +932,10 @@ Elements.ElementsActionDelegate = class {
         treeOutline.toggleEditAsHTML(node);
         return true;
       case 'elements.undo':
-        if (UI.isEditing())
-          return false;
         SDK.domModelUndoStack.undo();
         Elements.ElementsPanel.instance()._stylesWidget.forceUpdate();
         return true;
       case 'elements.redo':
-        if (UI.isEditing())
-          return false;
         SDK.domModelUndoStack.redo();
         Elements.ElementsPanel.instance()._stylesWidget.forceUpdate();
         return true;

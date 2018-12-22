@@ -13,17 +13,13 @@ Bindings.BlackboxManager = class {
     this._debuggerWorkspaceBinding = debuggerWorkspaceBinding;
 
     SDK.targetManager.addModelListener(
-        SDK.DebuggerModel, SDK.DebuggerModel.Events.ParsedScriptSource, this._parsedScriptSource, this);
-    SDK.targetManager.addModelListener(
-        SDK.DebuggerModel, SDK.DebuggerModel.Events.GlobalObjectCleared, this._globalObjectCleared, this);
+        SDK.DebuggerModel, SDK.DebuggerModel.Events.GlobalObjectCleared, this._clearCacheIfNeeded.bind(this), this);
     Common.moduleSetting('skipStackFramesPattern').addChangeListener(this._patternChanged.bind(this));
     Common.moduleSetting('skipContentScripts').addChangeListener(this._patternChanged.bind(this));
 
     /** @type {!Set<function()>} */
     this._listeners = new Set();
 
-    /** @type {!Map<!SDK.DebuggerModel, !Map<string, !Array<!Protocol.Debugger.ScriptPosition>>>} */
-    this._debuggerModelData = new Map();
     /** @type {!Map<string, boolean>} */
     this._isBlackboxedURLCache = new Map();
 
@@ -66,6 +62,9 @@ Bindings.BlackboxManager = class {
    */
   modelAdded(debuggerModel) {
     this._setBlackboxPatterns(debuggerModel);
+    const sourceMapManager = debuggerModel.sourceMapManager();
+    sourceMapManager.addEventListener(SDK.SourceMapManager.Events.SourceMapAttached, this._sourceMapAttached, this);
+    sourceMapManager.addEventListener(SDK.SourceMapManager.Events.SourceMapDetached, this._sourceMapDetached, this);
   }
 
   /**
@@ -73,8 +72,15 @@ Bindings.BlackboxManager = class {
    * @param {!SDK.DebuggerModel} debuggerModel
    */
   modelRemoved(debuggerModel) {
-    this._debuggerModelData.delete(debuggerModel);
-    this._isBlackboxedURLCache.clear();
+    this._clearCacheIfNeeded();
+    const sourceMapManager = debuggerModel.sourceMapManager();
+    sourceMapManager.removeEventListener(SDK.SourceMapManager.Events.SourceMapAttached, this._sourceMapAttached, this);
+    sourceMapManager.removeEventListener(SDK.SourceMapManager.Events.SourceMapDetached, this._sourceMapDetached, this);
+  }
+
+  _clearCacheIfNeeded() {
+    if (this._isBlackboxedURLCache.size > 1024)
+      this._isBlackboxedURLCache.clear();
   }
 
   /**
@@ -89,32 +95,6 @@ Bindings.BlackboxManager = class {
         patterns.push(item.pattern);
     }
     return debuggerModel.setBlackboxPatterns(patterns);
-  }
-
-  /**
-   * @param {!SDK.DebuggerModel.Location} location
-   * @return {boolean}
-   */
-  isBlackboxedRawLocation(location) {
-    const script = location.script();
-    if (!script)
-      return false;
-    const positions = this._scriptPositions(script);
-    if (!positions)
-      return this._isBlackboxedScript(script);
-    const index = positions.lowerBound(location, comparator);
-    return !!(index % 2);
-
-    /**
-     * @param {!SDK.DebuggerModel.Location} a
-     * @param {!Protocol.Debugger.ScriptPosition} b
-     * @return {number}
-     */
-    function comparator(a, b) {
-      if (a.lineNumber !== b.lineNumber)
-        return a.lineNumber - b.lineNumber;
-      return a.columnNumber - b.columnNumber;
-    }
   }
 
   /**
@@ -141,9 +121,26 @@ Bindings.BlackboxManager = class {
     if (isContentScript && Common.moduleSetting('skipContentScripts').get())
       return true;
     const regex = Common.moduleSetting('skipStackFramesPattern').asRegExp();
-    const isBlackboxed = regex && regex.test(url);
+    const isBlackboxed = (regex && regex.test(url)) || false;
     this._isBlackboxedURLCache.set(url, isBlackboxed);
     return isBlackboxed;
+  }
+
+  /**
+   * @param {!Common.Event} event
+   */
+  _sourceMapAttached(event) {
+    const script = /** @type {!SDK.Script} */ (event.data.client);
+    const sourceMap = /** @type {!SDK.SourceMap} */ (event.data.sourceMap);
+    this._updateScriptRanges(script, sourceMap);
+  }
+
+  /**
+   * @param {!Common.Event} event
+   */
+  _sourceMapDetached(event) {
+    const script = /** @type {!SDK.Script} */ (event.data.client);
+    this._updateScriptRanges(script, null);
   }
 
   /**
@@ -151,47 +148,49 @@ Bindings.BlackboxManager = class {
    * @param {?SDK.SourceMap} sourceMap
    * @return {!Promise<undefined>}
    */
-  sourceMapLoaded(script, sourceMap) {
-    if (!sourceMap)
-      return Promise.resolve();
-    const previousScriptState = this._scriptPositions(script);
-    if (!previousScriptState)
-      return Promise.resolve();
-
-    const hasBlackboxedMappings = sourceMap.sourceURLs().some(url => this.isBlackboxedURL(url));
-    const mappings = hasBlackboxedMappings ? sourceMap.mappings().slice() : [];
-    if (!mappings.length) {
-      if (previousScriptState.length > 0)
-        return this._setScriptState(script, []);
-      return Promise.resolve();
+  async _updateScriptRanges(script, sourceMap) {
+    let hasBlackboxedMappings = false;
+    if (!Bindings.blackboxManager.isBlackboxedURL(script.sourceURL, script.isContentScript()))
+      hasBlackboxedMappings = sourceMap ? sourceMap.sourceURLs().some(url => this.isBlackboxedURL(url)) : false;
+    if (!hasBlackboxedMappings) {
+      if (script[Bindings.BlackboxManager._blackboxedRanges] && await script.setBlackboxedRanges([]))
+        delete script[Bindings.BlackboxManager._blackboxedRanges];
+      this._debuggerWorkspaceBinding.updateLocations(script);
+      return;
     }
-    mappings.sort(mappingComparator);
 
+    const mappings = sourceMap.mappings();
+    const newRanges = [];
     let currentBlackboxed = false;
-    let isBlackboxed = false;
-    const positions = [];
-    // If content in script file begin is not mapped and one or more ranges are blackboxed then blackbox it.
     if (mappings[0].lineNumber !== 0 || mappings[0].columnNumber !== 0) {
-      positions.push({lineNumber: 0, columnNumber: 0});
+      newRanges.push({lineNumber: 0, columnNumber: 0});
       currentBlackboxed = true;
     }
     for (const mapping of mappings) {
       if (mapping.sourceURL && currentBlackboxed !== this.isBlackboxedURL(mapping.sourceURL)) {
-        positions.push({lineNumber: mapping.lineNumber, columnNumber: mapping.columnNumber});
+        newRanges.push({lineNumber: mapping.lineNumber, columnNumber: mapping.columnNumber});
         currentBlackboxed = !currentBlackboxed;
       }
-      isBlackboxed = currentBlackboxed || isBlackboxed;
     }
-    return this._setScriptState(script, !isBlackboxed ? [] : positions);
+
+    const oldRanges = script[Bindings.BlackboxManager._blackboxedRanges] || [];
+    if (!isEqual(oldRanges, newRanges) && await script.setBlackboxedRanges(newRanges))
+      script[Bindings.BlackboxManager._blackboxedRanges] = newRanges;
+    this._debuggerWorkspaceBinding.updateLocations(script);
+
     /**
-     * @param {!SDK.SourceMapEntry} a
-     * @param {!SDK.SourceMapEntry} b
-     * @return {number}
+     * @param {!Array<!{lineNumber: number, columnNumber: number}>} rangesA
+     * @param {!Array<!{lineNumber: number, columnNumber: number}>} rangesB
+     * @return {boolean}
      */
-    function mappingComparator(a, b) {
-      if (a.lineNumber !== b.lineNumber)
-        return a.lineNumber - b.lineNumber;
-      return a.columnNumber - b.columnNumber;
+    function isEqual(rangesA, rangesB) {
+      if (rangesA.length !== rangesB.length)
+        return false;
+      for (let i = 0; i < rangesA.length; ++i) {
+        if (rangesA[i].lineNumber !== rangesB[i].lineNumber || rangesA[i].columnNumber !== rangesB[i].columnNumber)
+          return false;
+      }
+      return true;
     }
   }
 
@@ -285,31 +284,22 @@ Bindings.BlackboxManager = class {
     Common.moduleSetting('skipStackFramesPattern').setAsArray(regexPatterns);
   }
 
-  _patternChanged() {
+  async _patternChanged() {
     this._isBlackboxedURLCache.clear();
 
     /** @type {!Array<!Promise>} */
     const promises = [];
     for (const debuggerModel of SDK.targetManager.models(SDK.DebuggerModel)) {
       promises.push(this._setBlackboxPatterns(debuggerModel));
+      const sourceMapManager = debuggerModel.sourceMapManager();
       for (const script of debuggerModel.scripts())
-        promises.push(this._addScript(script).then(loadSourceMap.bind(this, script)));
+        promises.push(this._updateScriptRanges(script, sourceMapManager.sourceMapForClient(script)));
     }
-    Promise.all(promises).then(() => {
-      const listeners = Array.from(this._listeners);
-      for (const listener of listeners)
-        listener();
-      this._patternChangeFinishedForTests();
-    });
-
-    /**
-     * @param {!SDK.Script} script
-     * @return {!Promise<undefined>}
-     * @this {Bindings.BlackboxManager}
-     */
-    function loadSourceMap(script) {
-      return this.sourceMapLoaded(script, this._debuggerWorkspaceBinding.sourceMapForScript(script));
-    }
+    await Promise.all(promises);
+    const listeners = Array.from(this._listeners);
+    for (const listener of listeners)
+      listener();
+    this._patternChangeFinishedForTests();
   }
 
   _patternChangeFinishedForTests() {
@@ -500,6 +490,8 @@ Bindings.BlackboxManager = class {
     return prefix + name.escapeForRegExp() + (url.endsWith(name) ? '$' : '\\b');
   }
 };
+
+Bindings.BlackboxManager._blackboxedRanges = Symbol('blackboxedRanged');
 
 /** @type {!Bindings.BlackboxManager} */
 Bindings.blackboxManager;

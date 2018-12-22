@@ -13,6 +13,102 @@ const commandMenuShortcut = Host.isMac() ? 'Command + Shift + P' : 'Control + Sh
 /** @type {!Array<!Help.ReleaseNote>} */
 Help.releaseNoteText = [
   {
+    version: 14,
+    header: 'Highlights from the Chrome 72 update',
+    highlights: [
+      {
+        title: 'Visualize performance metrics',
+        subtitle:
+            'Performance metrics like DOMContentLoaded and First Meaningful Paint are now marked in the Timings section of the Performance panel.',
+        link: 'https://developers.google.com/web/updates/2018/11/devtools#metrics',
+      },
+      {
+        title: 'Highlight text nodes',
+        subtitle: 'Hover over a text node in the DOM Tree to highlight it in the viewport.',
+        link: 'https://developers.google.com/web/updates/2018/11/devtools#highlight',
+      },
+      {
+        title: 'Copy JS path',
+        subtitle:
+            'Right-click a DOM node and select "Copy" > "Copy JS path" to quickly get a JavaScript expression that points to that node.',
+        link: 'https://developers.google.com/web/updates/2018/11/devtools#copy',
+      },
+      {
+        title: 'Audits panel updates',
+        subtitle:
+            'A new audit that lists detected JS libraries and new keywords for accessing the Audits panel from the Command Menu.',
+        link: 'https://developers.google.com/web/updates/2018/11/devtools#audits',
+      },
+    ],
+    link: 'https://developers.google.com/web/updates/2018/11/devtools',
+  },
+  {
+    version: 13,
+    header: 'Highlights from the Chrome 71 update',
+    highlights: [
+      {
+        title: 'Hover over a Live Expression to highlight a DOM node',
+        subtitle: 'Hover over a result that evaluates to a node to highlight that node in the viewport.',
+        link: 'https://developers.google.com/web/updates/2018/10/devtools#hover',
+      },
+      {
+        title: 'Store DOM nodes as global variables',
+        subtitle: 'Right-click a node in the Elements panel or Console and select "Store as global variable".',
+        link: 'https://developers.google.com/web/updates/2018/10/devtools#store',
+      },
+      {
+        title: 'Initiator and priority information now in HAR imports and exports',
+        subtitle:
+            'Get more context around what caused a resource to be requested and what priority the browser assigned to each resource when sharing network logs.',
+        link: 'https://developers.google.com/web/updates/2018/10/devtools#HAR',
+      },
+      {
+        title: 'Access the Command Menu from the Main Menu',
+        subtitle: 'Open the Main Menu and select "Run command".',
+        link: 'https://developers.google.com/web/updates/2018/10/devtools#command-menu',
+      },
+    ],
+    link: 'https://developers.google.com/web/updates/2018/10/devtools',
+  },
+  {
+    version: 12,
+    header: 'Highlights from the Chrome 70 update',
+    highlights: [
+      {
+        title: 'Live Expressions in the Console',
+        subtitle: 'Pin expressions to the top of the Console to monitor their values in real-time.',
+        link: 'https://developers.google.com/web/updates/2018/08/devtools#watch',
+      },
+      {
+        title: 'Highlight DOM nodes during Eager Evaluation',
+        subtitle: 'Type an expression that evaluates to a node to highlight that node in the viewport.',
+        link: 'https://developers.google.com/web/updates/2018/08/devtools#nodes',
+      },
+      {
+        title: 'Autocomplete Conditional Breakpoints',
+        subtitle: 'Type expressions quickly and accurately.',
+        link: 'https://developers.google.com/web/updates/2018/08/devtools#autocomplete',
+      },
+      {
+        title: 'Performance panel optimizations',
+        subtitle: 'Faster loading and processing of Performance recordings.',
+        link: 'https://developers.google.com/web/updates/2018/08/devtools#performance',
+      },
+      {
+        title: 'More reliable debugging',
+        subtitle: 'Bug fixes for sourcemaps and blackboxing.',
+        link: 'https://developers.google.com/web/updates/2018/08/devtools#debugging',
+      },
+      {
+        title: 'Debug Node.js apps with ndb',
+        subtitle:
+            'Detect and attach to child processes, place breakpoints before modules are required, edit files within DevTools, and more.',
+        link: 'https://developers.google.com/web/updates/2018/08/devtools#ndb',
+      },
+    ],
+    link: 'https://developers.google.com/web/updates/2018/08/devtools',
+  },
+  {
     version: 11,
     header: 'Highlights from the Chrome 68 update',
     highlights: [

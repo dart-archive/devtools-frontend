@@ -58,6 +58,13 @@ SDK.OverlayModel = class extends SDK.SDKModel {
         () => this._overlayAgent.setShowScrollBottleneckRects(this._showScrollBottleneckRectsSetting.get()));
     if (this._showScrollBottleneckRectsSetting.get())
       this._overlayAgent.setShowScrollBottleneckRects(true);
+
+    this._showHitTestBordersSetting = Common.moduleSetting('showHitTestBorders');
+    this._showHitTestBordersSetting.addChangeListener(
+        () => this._overlayAgent.setShowHitTestBorders(this._showHitTestBordersSetting.get()));
+    if (this._showHitTestBordersSetting.get())
+      this._overlayAgent.setShowHitTestBorders(true);
+
     if (target.suspended())
       this._overlayAgent.setSuspended(true);
   }
@@ -73,7 +80,7 @@ SDK.OverlayModel = class extends SDK.SDKModel {
 
   static hideDOMNodeHighlight() {
     for (const overlayModel of SDK.targetManager.models(SDK.OverlayModel))
-      overlayModel.highlightDOMNode(0);
+      overlayModel._delayedHideHighlight(0);
   }
 
   static muteHighlight() {
@@ -174,7 +181,15 @@ SDK.OverlayModel = class extends SDK.SDKModel {
    */
   highlightDOMNodeForTwoSeconds(nodeId) {
     this.highlightDOMNode(nodeId);
-    this._hideHighlightTimeout = setTimeout(() => this.highlightDOMNode(0), 2000);
+    this._delayedHideHighlight(2000);
+  }
+
+  /**
+   * @param {number} delay
+   */
+  _delayedHideHighlight(delay) {
+    if (this._hideHighlightTimeout === null)
+      this._hideHighlightTimeout = setTimeout(() => this.highlightDOMNode(0), delay);
   }
 
   /**
