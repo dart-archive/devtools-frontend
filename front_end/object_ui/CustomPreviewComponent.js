@@ -30,8 +30,10 @@ ObjectUI.CustomPreviewSection = class {
 
     if (customPreview.hasBody || customPreview.bodyGetterId) {
       this._header.classList.add('custom-expandable-section-header');
-      this._header.addEventListener('click', this._onClick.bind(this), false);
       this._expandIcon = UI.Icon.create('smallicon-triangle-right', 'custom-expand-icon');
+      // DDT: Moving this event listener from the entire header to just the icon
+      // so to not shadow object links.
+      this._expandIcon.addEventListener('click', this._onClick.bind(this), false);
       this._header.insertBefore(this._expandIcon, this._header.firstChild);
     }
 
@@ -219,7 +221,47 @@ ObjectUI.CustomPreviewComponent = class {
     this.element = createElementWithClass('span', 'source-code');
     const shadowRoot = UI.createShadowRootWithCoreStyles(this.element, 'object_ui/customPreviewComponent.css');
     this.element.addEventListener('contextmenu', this._contextMenuEventFired.bind(this), false);
+    // DDC: Must be called prior to appending the element to the shadowRoot
+    this.createTypeLink();
     shadowRoot.appendChild(this._customPreviewSection.element());
+  }
+
+  async createTypeLink() {
+    // DDT: Creates a link from objects to their runtime type's source
+    // Wrap dart.getReifiedType in order to bind its argumetn to 'this'
+    let remoteFunction = "function() { " +
+        "return dart_library" +
+        ".debuggerLibraries()[0][\"dart\"]" +
+        ".getReifiedType(this); }";
+    let remoteFunctionResult = await this._object._runtimeAgent
+        .invoke_callFunctionOn({
+          // objectId corresponds to 'this' in functionDeclaration's context
+          objectId: this._object._objectId,
+          functionDeclaration: remoteFunction,
+          arguments: [],
+          silent: true,
+          returnByValue: false
+        });
+    let remoteObject = this._object.runtimeModel()
+        .createRemoteObject(remoteFunctionResult.result);
+    let functionDetails = (await remoteObject
+        .debuggerModel()
+        .functionDetailsPromise(remoteObject));
+    let functionLocation = functionDetails.location;
+    if (functionLocation === undefined) return;
+    // Manually creating a link because formatting functions such as
+    // formatObjectAsFunction don't preserve the custom formatter's content.
+    let typeLink = createElementWithClass('span', 'linkified devtools-link');
+    typeLink.addEventListener('click',
+        () => Common.Revealer.reveal(functionLocation) && false);
+    // We assume the type text exists on the header's first text node.
+    for (const node of this._customPreviewSection._header.childNodes) {
+      if (node.nodeType === Node.TEXT_NODE) {
+        typeLink.textContent = node.textContent;
+        this._customPreviewSection._header.replaceChild(typeLink, node);
+        break;
+      }
+    }
   }
 
   expandIfPossible() {
