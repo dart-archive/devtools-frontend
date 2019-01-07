@@ -189,24 +189,6 @@
         {
             "type": "setting",
             "category": "Rendering",
-            "settingName": "showHitTestBorders",
-            "settingType": "boolean",
-            "storageType": "session",
-            "options": [
-                {
-                    "value": true,
-                    "title": "Show hit-test borders"
-                },
-                {
-                    "value": false,
-                    "title": "Hide hit-test borders"
-                }
-            ],
-            "defaultValue": false
-        },
-        {
-            "type": "setting",
-            "category": "Rendering",
             "settingName": "emulatedCSSMedia",
             "settingType": "enum",
             "storageType": "session",
@@ -302,7 +284,6 @@
         "DOMModel.js",
         "DebuggerModel.js",
         "EmulationModel.js",
-        "HARLog.js",
         "LayerTreeBase.js",
         "LogModel.js",
         "ServiceWorkerManager.js",
@@ -320,7 +301,6 @@
         "SourceMap.js",
         "SourceMapManager.js",
         "NetworkManager.js",
-        "NetworkLog.js",
         "NetworkRequest.js",
         "PaintProfiler.js",
         "HeapProfilerModel.js",
@@ -328,7 +308,9 @@
         "../SupportedCSSProperties.js",
         "FilmStripModel.js",
         "ConsoleModel.js",
-        "DartSupport.js"
+        "DartSupport.js",
+        "DartEval.js",
+        "DartScopes.js"
     ],
     "skip_compilation": [
         "../SupportedCSSProperties.js"

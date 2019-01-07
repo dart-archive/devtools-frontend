@@ -122,7 +122,7 @@ SDK.ConsoleModel = class extends Common.Object {
    * @param {boolean} awaitPromise
    */
   async evaluateCommandInConsole(executionContext, originatingMessage, expression, useCommandLineAPI, awaitPromise) {
-    const dartVersion = $dartExpressionFor(executionContext, expression);
+    const dartVersion = await $dartExpressionFor(executionContext, expression);
     const result = await executionContext.evaluate(
         {
           expression: dartVersion,
@@ -160,6 +160,9 @@ SDK.ConsoleModel = class extends Common.Object {
    * @param {!SDK.ConsoleMessage} msg
    */
   addMessage(msg) {
+    if (msg.source === SDK.ConsoleMessage.MessageSource.Worker && SDK.targetManager.targetById(msg.workerId))
+      return;
+
     msg._pageLoadSequenceNumber = this._pageLoadSequenceNumber;
     if (msg.source === SDK.ConsoleMessage.MessageSource.ConsoleAPI && msg.type === SDK.ConsoleMessage.MessageType.Clear)
       this._clearIfNecessary();
@@ -201,7 +204,7 @@ SDK.ConsoleModel = class extends Common.Object {
     if (!exceptionMessage)
       return;
     this._errors--;
-    exceptionMessage.level = SDK.ConsoleMessage.MessageLevel.Verbose;
+    exceptionMessage.level = SDK.ConsoleMessage.MessageLevel.Info;
     this.dispatchEventToListeners(SDK.ConsoleModel.Events.MessageUpdated, exceptionMessage);
   }
 
@@ -353,63 +356,6 @@ SDK.ConsoleModel = class extends Common.Object {
    */
   warnings() {
     return this._warnings;
-  }
-
-  /**
-   * @param {?SDK.ExecutionContext} currentExecutionContext
-   * @param {?SDK.RemoteObject} remoteObject
-   */
-  async saveToTempVariable(currentExecutionContext, remoteObject) {
-    if (!remoteObject || !currentExecutionContext) {
-      failedToSave(null);
-      return;
-    }
-    const executionContext = /** @type {!SDK.ExecutionContext} */ (currentExecutionContext);
-
-    const result = await executionContext.globalObject(/* objectGroup */ '', /* generatePreview */ false);
-    if (!!result.exceptionDetails || !result.object) {
-      failedToSave(result.object || null);
-      return;
-    }
-
-    const globalObject = result.object;
-    const callFunctionResult =
-        await globalObject.callFunction(saveVariable, [SDK.RemoteObject.toCallArgument(remoteObject)]);
-    globalObject.release();
-    if (callFunctionResult.wasThrown || !callFunctionResult.object || callFunctionResult.object.type !== 'string') {
-      failedToSave(callFunctionResult.object || null);
-    } else {
-      const text = /** @type {string} */ (callFunctionResult.object.value);
-      const message = this.addCommandMessage(executionContext, text);
-      this.evaluateCommandInConsole(
-          executionContext, message, text, /* useCommandLineAPI */ false, /* awaitPromise */ false);
-    }
-    if (callFunctionResult.object)
-      callFunctionResult.object.release();
-
-    /**
-     * @suppressReceiverCheck
-     * @this {Window}
-     */
-    function saveVariable(value) {
-      const prefix = 'temp';
-      let index = 1;
-      while ((prefix + index) in this)
-        ++index;
-      const name = prefix + index;
-      this[name] = value;
-      return name;
-    }
-
-    /**
-     * @param {?SDK.RemoteObject} result
-     */
-    function failedToSave(result) {
-      let message = Common.UIString('Failed to save to temp variable.');
-      if (result)
-        message += ' ' + result.description;
-      Common.console.error(message);
-    }
   }
 };
 
