@@ -27,3 +27,5 @@
    first source map entry of a file.
  * Updated the source map entry selection algorithm to sometimes favor entries
    sequentially farther in the source map.
+ * Make expression evaluation work by sending the expression to the server for
+   compilation. This is a major change, and still has a number of limitations.
