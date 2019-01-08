@@ -148,7 +148,7 @@ Dart._Scope = class _Scope {
         if (!remoteObject || remoteObject.name.startsWith('_')) {
             return [];
         }
-        return remoteObject.value.getAllPropertiesPromise(false, false)
+        return remoteObject.value.getAllProperties(false, false)
             .then(result => result.properties);
     }
 }

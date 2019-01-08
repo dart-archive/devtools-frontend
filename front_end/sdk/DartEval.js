@@ -71,7 +71,7 @@ Dart._Evaluation = class {
         const groupPromises = [];
         for (const scope of scopeChain) {
             groupPromises.push(scope.object()
-                .getAllPropertiesPromise(false /* accessorPropertiesOnly */, false /* generatePreview */)
+                .getAllProperties(false /* accessorPropertiesOnly */, false /* generatePreview */)
                 .then(result => ({ properties: result.properties, name: scope.name() })));
         }
         const fullScopes = await Promise.all(groupPromises);

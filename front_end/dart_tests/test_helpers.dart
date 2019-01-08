@@ -249,7 +249,7 @@ class Bindings {
   List<FakeRemoteProperty> _properties;
   object() => this;
   name() => _name;
-  getAllPropertiesPromise(bool accessorPropertiesOnly, bool generatePreview) =>
+  getAllProperties(bool accessorPropertiesOnly, bool generatePreview) =>
       futureToPromise(Future.value(this));
   get properties => _properties;
 }
@@ -267,8 +267,8 @@ class FakeRemoteObject {
   var value;
   FakeRemoteObject({this.value});
   preview() => FakeRemotePreview();
-  getAllPropertiesPromise(bool accessorPropertiesOnly, bool generatePreview) =>
-      value.getAllPropertiesPromise(accessorPropertiesOnly, generatePreview);
+  getAllProperties(bool accessorPropertiesOnly, bool generatePreview) =>
+      value.getAllProperties(accessorPropertiesOnly, generatePreview);
 }
 
 /// Fake for a devtools preview of a remote object.
