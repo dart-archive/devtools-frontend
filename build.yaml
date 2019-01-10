@@ -7,3 +7,7 @@ targets:
       - services/**
       - test/**
       - lib/**
+    builders:
+      build_web_compilers|entrypoint:
+        generate_for:
+          include: ["web/**.dart", "lib/context_for_evaluation.dart", "test/**_test.dart"]

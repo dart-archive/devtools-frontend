@@ -333,7 +333,11 @@ Bindings.BlackboxManager = class {
     const blackboxed = this._isBlackboxedScript(script);
     var ranges =  blackboxed ? [{lineNumber: 0, columnNumber: 0}] : [];
     if (script.sourceURL.includes('dart_sdk.js')) {
-      return this._blackboxDartSDK(script);
+      // Do the faster check first, then the more careful one where we
+      // parse the URL.
+      if (new URL(script.sourceURL).pathname.endsWith('dart_sdk.js')) {
+        return this._blackboxDartSDK(script);
+      }
     } else {
       return this._setScriptState(script, ranges);
     }
