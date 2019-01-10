@@ -1,5 +1,17 @@
 * Dart DevTools Changes
 
+## 0.0.2
+ * When blackboxing the SDK it doesn't stop on Dart exceptions, since they're in
+   blackboxed source. Set the blackbox by source range to get around this. This
+   isn't visible in the UI, so it's hard-coded.
+ * Adding dart links to runtime types for objects.
+ * Fixed a bug resulting in links not being generated whenever they point to the
+   first source map entry of a file.
+ * Updated the source map entry selection algorithm to sometimes favor entries
+   sequentially farther in the source map.
+ * Make expression evaluation work by sending the expression to the server for
+   compilation. This is a major change, and still has a number of limitations.
+
 ## 0.0.1
  * Enable simple Dart expressions in the console and watch panes. So far this
    only supports expressions of the form "object.thing.otherThing" and some
@@ -19,13 +31,3 @@
  * Download and check-in the files that are normally read from the
    chrome-devtools-frontend site, in the interests of having this entirely
    statically serveable. Those files will need to be updated for Chrome changes.
- * When blackboxing the SDK it doesn't stop on Dart exceptions, since they're in
-   blackboxed source. Set the blackbox by source range to get around this. This
-   isn't visible in the UI, so it's hard-coded.
- * Adding dart links to runtime types for objects.
- * Fixed a bug resulting in links not being generated whenever they point to the
-   first source map entry of a file.
- * Updated the source map entry selection algorithm to sometimes favor entries
-   sequentially farther in the source map.
- * Make expression evaluation work by sending the expression to the server for
-   compilation. This is a major change, and still has a number of limitations.
