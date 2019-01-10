@@ -11,6 +11,7 @@
    sequentially farther in the source map.
  * Make expression evaluation work by sending the expression to the server for
    compilation. This is a major change, and still has a number of limitations.
+ * Change the default back to the light theme.
 
 ## 0.0.1
  * Enable simple Dart expressions in the console and watch panes. So far this
