@@ -19,6 +19,7 @@ Dart._Evaluation = class {
         this._enclosingLibraryName = null;
         this.forCompletion = forCompletion;
         this.aliasForThis = forCompletion ? 'this' : 'THIS';
+        this._rpcUrl = null;
     }
 
     /// Return the environments objects that devtools expects for autocompletion
@@ -83,7 +84,7 @@ Dart._Evaluation = class {
     ///
     /// @return {string}
     async url() {
-        const url = this.executionContext.origin; // This is the scheme/host/port.
+        const url = await this.rpcUrl();
         const scopeVariables = await this.variableNames();
         const module = await this._currentModuleId();
         // We assume the target name is the name of the html file, and ends in .html
@@ -97,9 +98,31 @@ Dart._Evaluation = class {
         const queryParameters = this._queryParameters(scopeVariables,
             [this._enclosingLibraryName, module, targetName, currentFile]);
         return url
-            + "/dartDevtools/eval/"
+            + "dartDevtools/eval/"
             + encodeURIComponent(this.dartExpression)
             + queryParameters;
+    }
+
+    /// The url to which we send our rpc requests.
+    ///
+    /// In the legacy module system, we get this as dart_library.roots[0].
+    /// We assume that there's only one root, which is probably not
+    /// true if there are multiple DDR instances. But it may not matter
+    /// which one we talk to.
+    async rpcUrl() {
+        if (this._rpcUrl) return this._rpcUrl;
+        const context = UI ? UI.context.flavor(SDK.ExecutionContext) : null;
+        const response = await context.evaluate(
+            {
+                expression: 'dart_library.roots.values().next().value',
+                silent: true,
+                returnByValue: false,
+                generatePreview: false
+            },
+            /* userGesture */ false,
+            /* awaitPromise */ false);
+        this._rpcUrl = response.object.value;
+        return this._rpcUrl;
     }
 
     /// Return a string with query parameters for our known arguments.
@@ -113,9 +136,9 @@ Dart._Evaluation = class {
     _queryParameters(scopeVariables, singleParameters) {
         const parameterNames = [
             'enclosingLibraryName',
-             'module',
-             'targetName',
-             'currentFile'];
+            'module',
+            'targetName',
+            'currentFile'];
         const _encode = (name, value) => name + '=' + encodeURIComponent(value);
         const parameters = singleParameters.map(
             (value, i) => _encode(parameterNames[i], value));
