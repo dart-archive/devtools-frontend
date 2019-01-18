@@ -111,7 +111,10 @@ Dart._Evaluation = class {
     /// which one we talk to.
     async rpcUrl() {
         if (this._rpcUrl) return this._rpcUrl;
-        const context = UI ? UI.context.flavor(SDK.ExecutionContext) : null;
+        const context = 
+            self.UI ? self.UI.context.flavor(SDK.ExecutionContext) : null;
+        // If we're in a test, bail out.
+        if (!context) return null;
         const response = await context.evaluate(
             {
                 expression: 'dart_library.roots.values().next().value',
