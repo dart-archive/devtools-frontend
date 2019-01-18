@@ -91,7 +91,8 @@ window.$dartExpressionFor = async function (executionContext, dartExpression) {
   const enclosingLibraryName = await evaluation.currentLibrary();
   if (!enclosingLibraryName) return dartExpression;
 
-  const response = await Dart.fetch(await evaluation.url());
+  const url = await evaluation.url();
+  const response = await Dart.fetch(url);
   const text = await response.text();
   return text;
 }
@@ -129,4 +130,4 @@ Dart.environments = async function (callFrame) {
 }
 
 /// Allow us to mock the Http fetch operation in tests.
-Dart.fetch = x => fetch(x);
+Dart.fetch = x => fetch(x, {credentials: 'include'});
