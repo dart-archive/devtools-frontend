@@ -91,10 +91,20 @@ window.$dartExpressionFor = async function (executionContext, dartExpression) {
   const enclosingLibraryName = await evaluation.currentLibrary();
   if (!enclosingLibraryName) return dartExpression;
 
-  const url = await evaluation.url();
-  const response = await Dart.fetch(url);
-  const text = await response.text();
-  return text;
+  try {
+    const url = await evaluation.url();
+    const response = await Dart.fetch(url);
+    const text = await response.text();
+    return text;
+  } catch (error) {
+    const errorText = 
+        'Error in evaluation: (' + error + ') \\nEvaluating as JavaScript';
+    const fallbackValue = 
+        'console.log("%c' + errorText 
+        + '", "background-color: hsl(50, 100%, 95%)");'
+        + dartExpression;
+    return fallbackValue;
+  }
 }
 
 /// Return the environments for [callFrame].
