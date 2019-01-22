@@ -97,9 +97,11 @@ window.$dartExpressionFor = async function (executionContext, dartExpression) {
     const text = await response.text();
     return text;
   } catch (error) {
+    const errorText = 
+        'Error in evaluation: (' + error + ') \\nEvaluating as JavaScript';
     const fallbackValue = 
-        'console.log("Error in evaluation: ' + error + '");'
-        + 'console.log("Evaluating as JavaScript");'
+        'console.log("%c' + errorText 
+        + '", "background-color: hsl(50, 100%, 95%)");'
         + dartExpression;
     return fallbackValue;
   }
