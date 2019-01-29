@@ -6,7 +6,7 @@
 Dart = {};
 
 /// A handler for dealing with system events.
-Dart.NotificationHandler = class {
+Dart._NotificationHandler = class {
 
   static register() {
     SDK.targetManager.addModelListener(
@@ -24,7 +24,7 @@ Dart.NotificationHandler = class {
     const evaluation = new Dart._Evaluation(
       selectedFrame,
       executionContext,
-      "",
+      '',
       false);
     const enclosingLibraryName = await evaluation.currentLibrary();
     // If there's an enclosing library name, then we're in a Dart context.
@@ -32,14 +32,14 @@ Dart.NotificationHandler = class {
   }
 
   static async _debuggerPaused(event) {
-    const isDart = await Dart.NotificationHandler._isInDartContext();
+    const isDart = await Dart._NotificationHandler._isInDartContext();
     const name = isDart ? 'Dart Console' : 'JavaScript Console';
     var panel = UI.InspectorView.instance()._drawerTabbedLocation.tabbedPane();
-    panel.changeTabTitle("console-view", name)
+    panel.changeTabTitle('console-view', name);
   }
 }
 
-Dart.NotificationHandler.register();
+Dart._NotificationHandler.register();
 
 /**
  * @implements {UI.ActionDelegate}
