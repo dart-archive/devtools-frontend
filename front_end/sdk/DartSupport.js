@@ -33,7 +33,7 @@ Dart._NotificationHandler = class {
 
   static async _debuggerPaused(event) {
     const isDart = await Dart._NotificationHandler._isInDartContext();
-    const name = isDart ? 'Dart Console' : 'JavaScript Console';
+    const name = (isDart ? 'Dart' : 'JavaScript') + ' Console';
     var panel = UI.InspectorView.instance()._drawerTabbedLocation.tabbedPane();
     panel.changeTabTitle('console-view', name);
   }
