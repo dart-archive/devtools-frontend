@@ -5,6 +5,42 @@
 // that happen?
 Dart = {};
 
+/// A handler for dealing with system events.
+Dart._NotificationHandler = class {
+
+  static register() {
+    SDK.targetManager.addModelListener(
+      SDK.DebuggerModel, SDK.DebuggerModel.Events.DebuggerPaused, this._debuggerPaused);
+  }
+
+  static async _isInDartContext() {
+    // TODO(alanknight): Reduce code duplication with $dartExpressionFor.
+    const executionContext = UI.context.flavor(SDK.ExecutionContext);
+    // We can't use selectedCallFrame() because it hasn't been set yet.
+    const selectedFrame = executionContext.debuggerModel.callFrames[0];
+    // We're not stopped at a breakpoint, treat it as JS.
+    if (!selectedFrame) return false;
+    // Find the Dart library, if any.
+    const evaluation = new Dart._Evaluation(
+      selectedFrame,
+      executionContext,
+      '',
+      false);
+    const enclosingLibraryName = await evaluation.currentLibrary();
+    // If there's an enclosing library name, then we're in a Dart context.
+    return enclosingLibraryName != null;
+  }
+
+  static async _debuggerPaused(event) {
+    const isDart = await Dart._NotificationHandler._isInDartContext();
+    const name = (isDart ? 'Dart' : 'JavaScript') + ' Console';
+    var panel = UI.InspectorView.instance()._drawerTabbedLocation.tabbedPane();
+    panel.changeTabTitle('console-view', name);
+  }
+}
+
+Dart._NotificationHandler.register();
+
 /**
  * @implements {UI.ActionDelegate}
  * @unrestricted
@@ -84,10 +120,10 @@ window.$dartExpressionFor = async function (executionContext, dartExpression) {
   // We're not stopped at a breakpoint, treat it as JS.
   if (!selectedFrame) return dartExpression;
   const evaluation = new Dart._Evaluation(
-      selectedFrame,
-      executionContext,
-      dartExpression,
-      false);
+    selectedFrame,
+    executionContext,
+    dartExpression,
+    false);
   const enclosingLibraryName = await evaluation.currentLibrary();
   if (!enclosingLibraryName) return dartExpression;
 
@@ -97,12 +133,12 @@ window.$dartExpressionFor = async function (executionContext, dartExpression) {
     const text = await response.text();
     return text;
   } catch (error) {
-    const errorText = 
-        'Error in evaluation: (' + error + ') \\nEvaluating as JavaScript';
-    const fallbackValue = 
-        'console.log("%c' + errorText 
-        + '", "background-color: hsl(50, 100%, 95%)");'
-        + dartExpression;
+    const errorText =
+      'Error in evaluation: (' + error + ') \\nEvaluating as JavaScript';
+    const fallbackValue =
+      'console.log("%c' + errorText
+      + '", "background-color: hsl(50, 100%, 95%)");'
+      + dartExpression;
     return fallbackValue;
   }
 }
@@ -132,12 +168,12 @@ Dart.environments = async function (callFrame) {
   // In tests we can't do that, so just leave it null.
   const context = UI ? UI.context.flavor(SDK.ExecutionContext) : null;
   const evaluation = new Dart._Evaluation(
-      callFrame,
-      context,
-      /* dartExpression */ null,
-      true);
+    callFrame,
+    context,
+    /* dartExpression */ null,
+    true);
   return evaluation.environments();
 }
 
 /// Allow us to mock the Http fetch operation in tests.
-Dart.fetch = x => fetch(x, {credentials: 'include'});
+Dart.fetch = x => fetch(x, { credentials: 'include' });
