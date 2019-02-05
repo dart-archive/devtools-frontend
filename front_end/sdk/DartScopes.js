@@ -438,4 +438,4 @@ Dart._namesToIgnore = new Set(['constructor', 'noSuchMethod', 'runtimeType',
     'toString', '_equals', '__defineGetter__', '__defineSetter__',
     '__lookupGetter__', '__lookupSetter__', '__proto__', 'classGetter',
     'hasOwnProperty', 'hashCode', 'isPrototypeOf', 'propertyIsEnumerable',
-    'toLocaleString', 'valueOf']);
+    'toLocaleString', 'valueOf', '_identityHashCode']);
