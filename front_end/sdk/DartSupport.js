@@ -9,8 +9,12 @@ Dart = {};
 Dart._NotificationHandler = class {
 
   static register() {
-    SDK.targetManager.addModelListener(
-      SDK.DebuggerModel, SDK.DebuggerModel.Events.DebuggerPaused, this._debuggerPaused);
+    if (window["SDK"]) {
+      SDK.targetManager.addModelListener(
+          SDK.DebuggerModel,
+          SDK.DebuggerModel.Events.DebuggerPaused, 
+          this._debuggerPaused);
+    }
   }
 
   static async _isInDartContext() {
