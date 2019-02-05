@@ -80,6 +80,24 @@ Dart._Evaluation = class {
         return fullScopes;
     }
 
+    /// A helper for evaluating an expression.
+    static async _evaluate(expression) {
+        const context =
+            self.UI ? self.UI.context.flavor(SDK.ExecutionContext) : null;
+        // If we're in a test, bail out.
+        if (!context) return null;
+        const response = await context.evaluate(
+            {
+                expression: expression,
+                silent: true,
+                returnByValue: false,
+                generatePreview: false
+            },
+            /* userGesture */ false,
+            /* awaitPromise */ false);
+        return response;
+    }
+
     /// Return a URL for the query we send to the server to request compilation.
     ///
     /// @return {string}
@@ -111,19 +129,8 @@ Dart._Evaluation = class {
     /// which one we talk to.
     async rpcUrl() {
         if (this._rpcUrl) return this._rpcUrl;
-        const context = 
-            self.UI ? self.UI.context.flavor(SDK.ExecutionContext) : null;
-        // If we're in a test, bail out.
-        if (!context) return null;
-        const response = await context.evaluate(
-            {
-                expression: 'dart_library.roots.values().next().value',
-                silent: true,
-                returnByValue: false,
-                generatePreview: false
-            },
-            /* userGesture */ false,
-            /* awaitPromise */ false);
+        const response = await Dart._Evaluation._evaluate('dart_library.roots.values().next().value');
+        if (!response) return null;
         this._rpcUrl = response.object.value;
         return this._rpcUrl;
     }

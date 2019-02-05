@@ -43,7 +43,7 @@ Dart._JsScopeChain = class {
         this.methodScope = this.methodScope.toDartScope();
 
         // Add a scope for 'this' if present.
-        this.thisScope = (await this.methodScope.thisScope()).toDartScope();
+        this.thisScope = (await this.methodScope.thisScope(this.libraryName)).toDartScope();
 
         // TODO(alanknight): Is there always an active library? Can we rely on
         // having bailed out well before this if we're in a JS scope.
@@ -174,17 +174,53 @@ Dart._MethodScope = class _MethodScope extends Dart._Scope {
     /// Returns a scope for the variables visible in 'this', if 'this' is bound,
     /// otherwise returns an empty Dart._ThisScope.
     ////
+    /// @param {string} libraryName. Used when we have to find a 'this' which wasn't
+    ///     in the original scopes, but we want to avoid just duplicating the library.
     /// @return {Dart._ThisScope}
-    async thisScope() {
+    async thisScope(libraryName) {
         if (!this.self) {
-            this._thisScope =
-                new Dart._ThisScope(null, 'empty', [], this.aliasForThis);
+          await this._addThisIfMissing(libraryName);
         }
         if (this._thisScope) return this._thisScope;
-        var properties = await this.expand(this.self);
+
+        var properties = (await this.expand(this.self)) || [];
         this._thisScope =
             new Dart._ThisScope(null, 'this', properties, this.aliasForThis);
         return this._thisScope;
+    }
+
+    /// Fill in the 'this' scope if it wasn't in the original call.
+    /// 
+    /// If we were not given a 'this' value in the devtools scopes that might mean 
+    /// we're in a nested closure, or we might be a top-level function.
+    /// Construct a 'this'. If it turns out to be null/undefined, make it empty.
+    /// If it just duplicates the containing library, ignore it. Otherwise insert
+    /// it into the scope where it will get expanded normally.
+    ///
+    /// @param {string} libraryName. Used when we have to find a 'this' which wasn't
+    ///     in the original scopes, but we want to avoid just duplicating the library.
+    /// @return {void}  Modifies this.self and this._thisScope
+    async _addThisIfMissing(libraryName) {
+        // If 'this' is the same as the current library, then return null, otherwise
+        // return 'this'. Finding the current library is a bit painful.
+        // This is very specific to the legacy module system.
+        const findCurrent = '(function () {'
+             + 'let libs = dart_library.debuggerLibraries();'
+             + 'for (var i = 0; i < libs.length; i++) { lib = libs[i]; '
+             + 'if (lib.hasOwnProperty("'  + libraryName + '")) {'
+             + '  return lib["' + libraryName + '"];}}})() === this ? null : this'; 
+
+        var actualThis = await Dart._Evaluation._evaluate(findCurrent);
+        // Guard against a null result, particularly in tests
+        actualThis = actualThis && actualThis.object;
+        if (actualThis) {
+            // Construct something that looks like a RemoteObjectProperty
+            this.self = { name: 'this', value: actualThis};
+            this.properties.push(this.self);
+        } else {
+          this._thisScope =
+            new Dart._ThisScope(null, 'empty', [], this.aliasForThis);
+        }
     }
 
     /// Convert back to the form that devtools expects internally, anonymous
