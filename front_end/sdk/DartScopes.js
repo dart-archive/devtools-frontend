@@ -194,8 +194,8 @@ Dart._MethodScope = class _MethodScope extends Dart._Scope {
     /// If we were not given a 'this' value in the devtools scopes that might mean 
     /// we're in a nested closure, or we might be a top-level function.
     /// Construct a 'this'. If it turns out to be null/undefined, make it empty.
-    /// If it just duplicates the containing library, ignore it. Otherwise expand
-    /// its values.
+    /// If it just duplicates the containing library, ignore it. Otherwise insert
+    /// it into the scope where it will get expanded normally.
     ///
     /// @param {string} libraryName. Used when we have to find a 'this' which wasn't
     ///     in the original scopes, but we want to avoid just duplicating the library.
