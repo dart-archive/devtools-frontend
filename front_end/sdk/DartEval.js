@@ -77,18 +77,8 @@ Dart._Evaluation = class {
         }
         const fullScopes = await Promise.all(groupPromises);
         this.callFrame.debuggerModel.runtimeModel().releaseObjectGroup('completion');
-  //      const fullerScopes = this._addThisIfMissing(fullScopes);
-   //     return fullerScopes;
         return fullScopes;
     }
-/// #### 
-    // async _addThisIfMissing(fullScopes) {
-    //     var remoteThis = fullScopes[0].properties.filter(each => each.name == 'this');
-    //     if (remoteThis.length != 0) return fullScopes;
-    //     var actualThis = await this._evaluate('this');
-    //     fullScopes[0].properties.push({ value: actualThis.object, name: 'this'});
-    //     return fullScopes;
-    // }
 
     /// A helper for evaluating an expression.
     static async _evaluate(expression) {

@@ -202,7 +202,8 @@ Dart._MethodScope = class _MethodScope extends Dart._Scope {
     /// @return {void}  Modifies this.self and this._thisScope
     async _addThisIfMissing(libraryName) {
         // If 'this' is the same as the current library, then return null, otherwise
-        // return 'this'.
+        // return 'this'. Finding the current library is a bit painful.
+        // This is very specific to the legacy module system.
         const findCurrent = '(function () {'
              + 'let libs = dart_library.debuggerLibraries();'
              + 'for (var i = 0; i < libs.length; i++) { lib = libs[i]; '

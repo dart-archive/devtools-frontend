@@ -9,6 +9,7 @@ Dart = {};
 Dart._NotificationHandler = class {
 
   static register() {
+    // Guard against the problem that in tests "SDK" is not defined.
     if (window["SDK"]) {
       SDK.targetManager.addModelListener(
           SDK.DebuggerModel,
