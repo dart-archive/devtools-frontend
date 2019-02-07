@@ -9,8 +9,11 @@
 Protocol.inspectorBackend.registerEnum("Accessibility.AXValueType", {Boolean: "boolean", Tristate: "tristate", BooleanOrUndefined: "booleanOrUndefined", Idref: "idref", IdrefList: "idrefList", Integer: "integer", Node: "node", NodeList: "nodeList", Number: "number", String: "string", ComputedString: "computedString", Token: "token", TokenList: "tokenList", DomRelation: "domRelation", Role: "role", InternalRole: "internalRole", ValueUndefined: "valueUndefined"});
 Protocol.inspectorBackend.registerEnum("Accessibility.AXValueSourceType", {Attribute: "attribute", Implicit: "implicit", Style: "style", Contents: "contents", Placeholder: "placeholder", RelatedElement: "relatedElement"});
 Protocol.inspectorBackend.registerEnum("Accessibility.AXValueNativeSourceType", {Figcaption: "figcaption", Label: "label", Labelfor: "labelfor", Labelwrapped: "labelwrapped", Legend: "legend", Tablecaption: "tablecaption", Title: "title", Other: "other"});
-Protocol.inspectorBackend.registerEnum("Accessibility.AXPropertyName", {Busy: "busy", Disabled: "disabled", Hidden: "hidden", HiddenRoot: "hiddenRoot", Invalid: "invalid", Keyshortcuts: "keyshortcuts", Roledescription: "roledescription", Live: "live", Atomic: "atomic", Relevant: "relevant", Root: "root", Autocomplete: "autocomplete", HasPopup: "hasPopup", Level: "level", Multiselectable: "multiselectable", Orientation: "orientation", Multiline: "multiline", Readonly: "readonly", Required: "required", Valuemin: "valuemin", Valuemax: "valuemax", Valuetext: "valuetext", Checked: "checked", Expanded: "expanded", Modal: "modal", Pressed: "pressed", Selected: "selected", Activedescendant: "activedescendant", Controls: "controls", Describedby: "describedby", Details: "details", Errormessage: "errormessage", Flowto: "flowto", Labelledby: "labelledby", Owns: "owns"});
+Protocol.inspectorBackend.registerEnum("Accessibility.AXPropertyName", {Busy: "busy", Disabled: "disabled", Editable: "editable", Focusable: "focusable", Focused: "focused", Hidden: "hidden", HiddenRoot: "hiddenRoot", Invalid: "invalid", Keyshortcuts: "keyshortcuts", Settable: "settable", Roledescription: "roledescription", Live: "live", Atomic: "atomic", Relevant: "relevant", Root: "root", Autocomplete: "autocomplete", HasPopup: "hasPopup", Level: "level", Multiselectable: "multiselectable", Orientation: "orientation", Multiline: "multiline", Readonly: "readonly", Required: "required", Valuemin: "valuemin", Valuemax: "valuemax", Valuetext: "valuetext", Checked: "checked", Expanded: "expanded", Modal: "modal", Pressed: "pressed", Selected: "selected", Activedescendant: "activedescendant", Controls: "controls", Describedby: "describedby", Details: "details", Errormessage: "errormessage", Flowto: "flowto", Labelledby: "labelledby", Owns: "owns"});
+Protocol.inspectorBackend.registerCommand("Accessibility.disable", [], [], false);
+Protocol.inspectorBackend.registerCommand("Accessibility.enable", [], [], false);
 Protocol.inspectorBackend.registerCommand("Accessibility.getPartialAXTree", [{"name": "nodeId", "type": "number", "optional": true}, {"name": "backendNodeId", "type": "number", "optional": true}, {"name": "objectId", "type": "string", "optional": true}, {"name": "fetchRelatives", "type": "boolean", "optional": true}], ["nodes"], false);
+Protocol.inspectorBackend.registerCommand("Accessibility.getFullAXTree", [], ["nodes"], false);
 
 // Animation.
 Protocol.inspectorBackend.registerEnum("Animation.AnimationType", {CSSTransition: "CSSTransition", CSSAnimation: "CSSAnimation", WebAnimation: "WebAnimation"});
@@ -41,14 +44,19 @@ Protocol.inspectorBackend.registerCommand("Audits.getEncodedResponse", [{"name":
 
 // Browser.
 Protocol.inspectorBackend.registerEnum("Browser.WindowState", {Normal: "normal", Minimized: "minimized", Maximized: "maximized", Fullscreen: "fullscreen"});
+Protocol.inspectorBackend.registerEnum("Browser.PermissionType", {AccessibilityEvents: "accessibilityEvents", AudioCapture: "audioCapture", BackgroundSync: "backgroundSync", BackgroundFetch: "backgroundFetch", ClipboardRead: "clipboardRead", ClipboardWrite: "clipboardWrite", DurableStorage: "durableStorage", Flash: "flash", Geolocation: "geolocation", Midi: "midi", MidiSysex: "midiSysex", Notifications: "notifications", PaymentHandler: "paymentHandler", ProtectedMediaIdentifier: "protectedMediaIdentifier", Sensors: "sensors", VideoCapture: "videoCapture"});
+Protocol.inspectorBackend.registerCommand("Browser.grantPermissions", [{"name": "origin", "type": "string", "optional": false}, {"name": "permissions", "type": "object", "optional": false}, {"name": "browserContextId", "type": "string", "optional": true}], [], false);
+Protocol.inspectorBackend.registerCommand("Browser.resetPermissions", [{"name": "browserContextId", "type": "string", "optional": true}], [], false);
 Protocol.inspectorBackend.registerCommand("Browser.close", [], [], false);
+Protocol.inspectorBackend.registerCommand("Browser.crash", [], [], false);
 Protocol.inspectorBackend.registerCommand("Browser.getVersion", [], ["protocolVersion", "product", "revision", "userAgent", "jsVersion"], false);
 Protocol.inspectorBackend.registerCommand("Browser.getBrowserCommandLine", [], ["arguments"], false);
-Protocol.inspectorBackend.registerCommand("Browser.getHistograms", [{"name": "query", "type": "string", "optional": true}], ["histograms"], false);
-Protocol.inspectorBackend.registerCommand("Browser.getHistogram", [{"name": "name", "type": "string", "optional": false}], ["histogram"], false);
+Protocol.inspectorBackend.registerCommand("Browser.getHistograms", [{"name": "query", "type": "string", "optional": true}, {"name": "delta", "type": "boolean", "optional": true}], ["histograms"], false);
+Protocol.inspectorBackend.registerCommand("Browser.getHistogram", [{"name": "name", "type": "string", "optional": false}, {"name": "delta", "type": "boolean", "optional": true}], ["histogram"], false);
 Protocol.inspectorBackend.registerCommand("Browser.getWindowBounds", [{"name": "windowId", "type": "number", "optional": false}], ["bounds"], false);
-Protocol.inspectorBackend.registerCommand("Browser.getWindowForTarget", [{"name": "targetId", "type": "string", "optional": false}], ["windowId", "bounds"], false);
+Protocol.inspectorBackend.registerCommand("Browser.getWindowForTarget", [{"name": "targetId", "type": "string", "optional": true}], ["windowId", "bounds"], false);
 Protocol.inspectorBackend.registerCommand("Browser.setWindowBounds", [{"name": "windowId", "type": "number", "optional": false}, {"name": "bounds", "type": "object", "optional": false}], [], false);
+Protocol.inspectorBackend.registerCommand("Browser.setDockTile", [{"name": "badgeLabel", "type": "string", "optional": true}, {"name": "image", "type": "string", "optional": true}], [], false);
 
 // CSS.
 Protocol.inspectorBackend.registerEnum("CSS.StyleSheetOrigin", {Injected: "injected", UserAgent: "user-agent", Inspector: "inspector", Regular: "regular"});
@@ -82,11 +90,12 @@ Protocol.inspectorBackend.registerCommand("CSS.stopRuleUsageTracking", [], ["rul
 Protocol.inspectorBackend.registerCommand("CSS.takeCoverageDelta", [], ["coverage"], false);
 
 // CacheStorage.
+Protocol.inspectorBackend.registerEnum("CacheStorage.CachedResponseType", {Basic: "basic", Cors: "cors", Default: "default", Error: "error", OpaqueResponse: "opaqueResponse", OpaqueRedirect: "opaqueRedirect"});
 Protocol.inspectorBackend.registerCommand("CacheStorage.deleteCache", [{"name": "cacheId", "type": "string", "optional": false}], [], false);
 Protocol.inspectorBackend.registerCommand("CacheStorage.deleteEntry", [{"name": "cacheId", "type": "string", "optional": false}, {"name": "request", "type": "string", "optional": false}], [], false);
 Protocol.inspectorBackend.registerCommand("CacheStorage.requestCacheNames", [{"name": "securityOrigin", "type": "string", "optional": false}], ["caches"], false);
 Protocol.inspectorBackend.registerCommand("CacheStorage.requestCachedResponse", [{"name": "cacheId", "type": "string", "optional": false}, {"name": "requestURL", "type": "string", "optional": false}], ["response"], false);
-Protocol.inspectorBackend.registerCommand("CacheStorage.requestEntries", [{"name": "cacheId", "type": "string", "optional": false}, {"name": "skipCount", "type": "number", "optional": false}, {"name": "pageSize", "type": "number", "optional": false}], ["cacheDataEntries", "hasMore"], false);
+Protocol.inspectorBackend.registerCommand("CacheStorage.requestEntries", [{"name": "cacheId", "type": "string", "optional": false}, {"name": "skipCount", "type": "number", "optional": false}, {"name": "pageSize", "type": "number", "optional": false}, {"name": "pathFilter", "type": "string", "optional": true}], ["cacheDataEntries", "hasMore"], false);
 
 // DOM.
 Protocol.inspectorBackend.registerEnum("DOM.PseudoType", {FirstLine: "first-line", FirstLetter: "first-letter", Before: "before", After: "after", Backdrop: "backdrop", Selection: "selection", FirstLineInherited: "first-line-inherited", Scrollbar: "scrollbar", ScrollbarThumb: "scrollbar-thumb", ScrollbarButton: "scrollbar-button", ScrollbarTrack: "scrollbar-track", ScrollbarTrackPiece: "scrollbar-track-piece", ScrollbarCorner: "scrollbar-corner", Resizer: "resizer", InputListButton: "input-list-button"});
@@ -114,9 +123,10 @@ Protocol.inspectorBackend.registerCommand("DOM.enable", [], [], false);
 Protocol.inspectorBackend.registerCommand("DOM.focus", [{"name": "nodeId", "type": "number", "optional": true}, {"name": "backendNodeId", "type": "number", "optional": true}, {"name": "objectId", "type": "string", "optional": true}], [], false);
 Protocol.inspectorBackend.registerCommand("DOM.getAttributes", [{"name": "nodeId", "type": "number", "optional": false}], ["attributes"], false);
 Protocol.inspectorBackend.registerCommand("DOM.getBoxModel", [{"name": "nodeId", "type": "number", "optional": true}, {"name": "backendNodeId", "type": "number", "optional": true}, {"name": "objectId", "type": "string", "optional": true}], ["model"], false);
+Protocol.inspectorBackend.registerCommand("DOM.getContentQuads", [{"name": "nodeId", "type": "number", "optional": true}, {"name": "backendNodeId", "type": "number", "optional": true}, {"name": "objectId", "type": "string", "optional": true}], ["quads"], false);
 Protocol.inspectorBackend.registerCommand("DOM.getDocument", [{"name": "depth", "type": "number", "optional": true}, {"name": "pierce", "type": "boolean", "optional": true}], ["root"], false);
 Protocol.inspectorBackend.registerCommand("DOM.getFlattenedDocument", [{"name": "depth", "type": "number", "optional": true}, {"name": "pierce", "type": "boolean", "optional": true}], ["nodes"], false);
-Protocol.inspectorBackend.registerCommand("DOM.getNodeForLocation", [{"name": "x", "type": "number", "optional": false}, {"name": "y", "type": "number", "optional": false}, {"name": "includeUserAgentShadowDOM", "type": "boolean", "optional": true}], ["nodeId"], false);
+Protocol.inspectorBackend.registerCommand("DOM.getNodeForLocation", [{"name": "x", "type": "number", "optional": false}, {"name": "y", "type": "number", "optional": false}, {"name": "includeUserAgentShadowDOM", "type": "boolean", "optional": true}], ["backendNodeId", "nodeId"], false);
 Protocol.inspectorBackend.registerCommand("DOM.getOuterHTML", [{"name": "nodeId", "type": "number", "optional": true}, {"name": "backendNodeId", "type": "number", "optional": true}, {"name": "objectId", "type": "string", "optional": true}], ["outerHTML"], false);
 Protocol.inspectorBackend.registerCommand("DOM.getRelayoutBoundary", [{"name": "nodeId", "type": "number", "optional": false}], ["nodeId"], false);
 Protocol.inspectorBackend.registerCommand("DOM.getSearchResults", [{"name": "searchId", "type": "string", "optional": false}, {"name": "fromIndex", "type": "number", "optional": false}, {"name": "toIndex", "type": "number", "optional": false}], ["nodeIds"], false);
@@ -139,12 +149,13 @@ Protocol.inspectorBackend.registerCommand("DOM.resolveNode", [{"name": "nodeId",
 Protocol.inspectorBackend.registerCommand("DOM.setAttributeValue", [{"name": "nodeId", "type": "number", "optional": false}, {"name": "name", "type": "string", "optional": false}, {"name": "value", "type": "string", "optional": false}], [], false);
 Protocol.inspectorBackend.registerCommand("DOM.setAttributesAsText", [{"name": "nodeId", "type": "number", "optional": false}, {"name": "text", "type": "string", "optional": false}, {"name": "name", "type": "string", "optional": true}], [], false);
 Protocol.inspectorBackend.registerCommand("DOM.setFileInputFiles", [{"name": "files", "type": "object", "optional": false}, {"name": "nodeId", "type": "number", "optional": true}, {"name": "backendNodeId", "type": "number", "optional": true}, {"name": "objectId", "type": "string", "optional": true}], [], false);
+Protocol.inspectorBackend.registerCommand("DOM.getFileInfo", [{"name": "objectId", "type": "string", "optional": false}], ["path"], false);
 Protocol.inspectorBackend.registerCommand("DOM.setInspectedNode", [{"name": "nodeId", "type": "number", "optional": false}], [], false);
 Protocol.inspectorBackend.registerCommand("DOM.setNodeName", [{"name": "nodeId", "type": "number", "optional": false}, {"name": "name", "type": "string", "optional": false}], ["nodeId"], false);
 Protocol.inspectorBackend.registerCommand("DOM.setNodeValue", [{"name": "nodeId", "type": "number", "optional": false}, {"name": "value", "type": "string", "optional": false}], [], false);
 Protocol.inspectorBackend.registerCommand("DOM.setOuterHTML", [{"name": "nodeId", "type": "number", "optional": false}, {"name": "outerHTML", "type": "string", "optional": false}], [], false);
 Protocol.inspectorBackend.registerCommand("DOM.undo", [], [], false);
-Protocol.inspectorBackend.registerCommand("DOM.getFrameOwner", [{"name": "frameId", "type": "string", "optional": false}], ["nodeId"], false);
+Protocol.inspectorBackend.registerCommand("DOM.getFrameOwner", [{"name": "frameId", "type": "string", "optional": false}], ["backendNodeId", "nodeId"], false);
 
 // DOMDebugger.
 Protocol.inspectorBackend.registerEnum("DOMDebugger.DOMBreakpointType", {SubtreeModified: "subtree-modified", AttributeModified: "attribute-modified", NodeRemoved: "node-removed"});
@@ -162,6 +173,7 @@ Protocol.inspectorBackend.registerCommand("DOMDebugger.setXHRBreakpoint", [{"nam
 Protocol.inspectorBackend.registerCommand("DOMSnapshot.disable", [], [], false);
 Protocol.inspectorBackend.registerCommand("DOMSnapshot.enable", [], [], false);
 Protocol.inspectorBackend.registerCommand("DOMSnapshot.getSnapshot", [{"name": "computedStyleWhitelist", "type": "object", "optional": false}, {"name": "includeEventListeners", "type": "boolean", "optional": true}, {"name": "includePaintOrder", "type": "boolean", "optional": true}, {"name": "includeUserAgentShadowTree", "type": "boolean", "optional": true}], ["domNodes", "layoutTreeNodes", "computedStyles"], false);
+Protocol.inspectorBackend.registerCommand("DOMSnapshot.captureSnapshot", [{"name": "computedStyles", "type": "object", "optional": false}], ["documents", "strings"], false);
 
 // DOMStorage.
 Protocol.inspectorBackend.registerEvent("DOMStorage.domStorageItemAdded", ["storageId", "key", "newValue"]);
@@ -196,9 +208,12 @@ Protocol.inspectorBackend.registerCommand("Emulation.canEmulate", [], ["result"]
 Protocol.inspectorBackend.registerCommand("Emulation.clearDeviceMetricsOverride", [], [], false);
 Protocol.inspectorBackend.registerCommand("Emulation.clearGeolocationOverride", [], [], false);
 Protocol.inspectorBackend.registerCommand("Emulation.resetPageScaleFactor", [], [], false);
+Protocol.inspectorBackend.registerCommand("Emulation.setFocusEmulationEnabled", [{"name": "enabled", "type": "boolean", "optional": false}], [], false);
 Protocol.inspectorBackend.registerCommand("Emulation.setCPUThrottlingRate", [{"name": "rate", "type": "number", "optional": false}], [], false);
 Protocol.inspectorBackend.registerCommand("Emulation.setDefaultBackgroundColorOverride", [{"name": "color", "type": "object", "optional": true}], [], false);
 Protocol.inspectorBackend.registerCommand("Emulation.setDeviceMetricsOverride", [{"name": "width", "type": "number", "optional": false}, {"name": "height", "type": "number", "optional": false}, {"name": "deviceScaleFactor", "type": "number", "optional": false}, {"name": "mobile", "type": "boolean", "optional": false}, {"name": "scale", "type": "number", "optional": true}, {"name": "screenWidth", "type": "number", "optional": true}, {"name": "screenHeight", "type": "number", "optional": true}, {"name": "positionX", "type": "number", "optional": true}, {"name": "positionY", "type": "number", "optional": true}, {"name": "dontSetVisibleSize", "type": "boolean", "optional": true}, {"name": "screenOrientation", "type": "object", "optional": true}, {"name": "viewport", "type": "object", "optional": true}], [], false);
+Protocol.inspectorBackend.registerCommand("Emulation.setScrollbarsHidden", [{"name": "hidden", "type": "boolean", "optional": false}], [], false);
+Protocol.inspectorBackend.registerCommand("Emulation.setDocumentCookieDisabled", [{"name": "disabled", "type": "boolean", "optional": false}], [], false);
 Protocol.inspectorBackend.registerCommand("Emulation.setEmitTouchEventsForMouse", [{"name": "enabled", "type": "boolean", "optional": false}, {"name": "configuration", "type": "string", "optional": true}], [], false);
 Protocol.inspectorBackend.registerCommand("Emulation.setEmulatedMedia", [{"name": "media", "type": "string", "optional": false}], [], false);
 Protocol.inspectorBackend.registerCommand("Emulation.setGeolocationOverride", [{"name": "latitude", "type": "number", "optional": true}, {"name": "longitude", "type": "number", "optional": true}, {"name": "accuracy", "type": "number", "optional": true}], [], false);
@@ -208,6 +223,7 @@ Protocol.inspectorBackend.registerCommand("Emulation.setScriptExecutionDisabled"
 Protocol.inspectorBackend.registerCommand("Emulation.setTouchEmulationEnabled", [{"name": "enabled", "type": "boolean", "optional": false}, {"name": "maxTouchPoints", "type": "number", "optional": true}], [], false);
 Protocol.inspectorBackend.registerCommand("Emulation.setVirtualTimePolicy", [{"name": "policy", "type": "string", "optional": false}, {"name": "budget", "type": "number", "optional": true}, {"name": "maxVirtualTimeTaskStarvationCount", "type": "number", "optional": true}, {"name": "waitForNavigation", "type": "boolean", "optional": true}, {"name": "initialVirtualTime", "type": "number", "optional": true}], ["virtualTimeTicksBase"], false);
 Protocol.inspectorBackend.registerCommand("Emulation.setVisibleSize", [{"name": "width", "type": "number", "optional": false}, {"name": "height", "type": "number", "optional": false}], [], false);
+Protocol.inspectorBackend.registerCommand("Emulation.setUserAgentOverride", [{"name": "userAgent", "type": "string", "optional": false}, {"name": "acceptLanguage", "type": "string", "optional": true}, {"name": "platform", "type": "string", "optional": true}], [], false);
 
 // HeadlessExperimental.
 Protocol.inspectorBackend.registerEnum("HeadlessExperimental.ScreenshotParamsFormat", {Jpeg: "jpeg", Png: "png"});
@@ -236,7 +252,8 @@ Protocol.inspectorBackend.registerCommand("IndexedDB.requestDatabaseNames", [{"n
 // Input.
 Protocol.inspectorBackend.registerEnum("Input.GestureSourceType", {Default: "default", Touch: "touch", Mouse: "mouse"});
 Protocol.inspectorBackend.registerCommand("Input.dispatchKeyEvent", [{"name": "type", "type": "string", "optional": false}, {"name": "modifiers", "type": "number", "optional": true}, {"name": "timestamp", "type": "number", "optional": true}, {"name": "text", "type": "string", "optional": true}, {"name": "unmodifiedText", "type": "string", "optional": true}, {"name": "keyIdentifier", "type": "string", "optional": true}, {"name": "code", "type": "string", "optional": true}, {"name": "key", "type": "string", "optional": true}, {"name": "windowsVirtualKeyCode", "type": "number", "optional": true}, {"name": "nativeVirtualKeyCode", "type": "number", "optional": true}, {"name": "autoRepeat", "type": "boolean", "optional": true}, {"name": "isKeypad", "type": "boolean", "optional": true}, {"name": "isSystemKey", "type": "boolean", "optional": true}, {"name": "location", "type": "number", "optional": true}], [], false);
-Protocol.inspectorBackend.registerCommand("Input.dispatchMouseEvent", [{"name": "type", "type": "string", "optional": false}, {"name": "x", "type": "number", "optional": false}, {"name": "y", "type": "number", "optional": false}, {"name": "modifiers", "type": "number", "optional": true}, {"name": "timestamp", "type": "number", "optional": true}, {"name": "button", "type": "string", "optional": true}, {"name": "clickCount", "type": "number", "optional": true}, {"name": "deltaX", "type": "number", "optional": true}, {"name": "deltaY", "type": "number", "optional": true}], [], false);
+Protocol.inspectorBackend.registerCommand("Input.insertText", [{"name": "text", "type": "string", "optional": false}], [], false);
+Protocol.inspectorBackend.registerCommand("Input.dispatchMouseEvent", [{"name": "type", "type": "string", "optional": false}, {"name": "x", "type": "number", "optional": false}, {"name": "y", "type": "number", "optional": false}, {"name": "modifiers", "type": "number", "optional": true}, {"name": "timestamp", "type": "number", "optional": true}, {"name": "button", "type": "string", "optional": true}, {"name": "buttons", "type": "number", "optional": true}, {"name": "clickCount", "type": "number", "optional": true}, {"name": "deltaX", "type": "number", "optional": true}, {"name": "deltaY", "type": "number", "optional": true}], [], false);
 Protocol.inspectorBackend.registerCommand("Input.dispatchTouchEvent", [{"name": "type", "type": "string", "optional": false}, {"name": "touchPoints", "type": "object", "optional": false}, {"name": "modifiers", "type": "number", "optional": true}, {"name": "timestamp", "type": "number", "optional": true}], [], false);
 Protocol.inspectorBackend.registerCommand("Input.emulateTouchFromMouseEvent", [{"name": "type", "type": "string", "optional": false}, {"name": "x", "type": "number", "optional": false}, {"name": "y", "type": "number", "optional": false}, {"name": "button", "type": "string", "optional": false}, {"name": "timestamp", "type": "number", "optional": true}, {"name": "deltaX", "type": "number", "optional": true}, {"name": "deltaY", "type": "number", "optional": true}, {"name": "modifiers", "type": "number", "optional": true}, {"name": "clickCount", "type": "number", "optional": true}], [], false);
 Protocol.inspectorBackend.registerCommand("Input.setIgnoreInputEvents", [{"name": "ignore", "type": "boolean", "optional": false}], [], false);
@@ -289,21 +306,23 @@ Protocol.inspectorBackend.registerCommand("Memory.getBrowserSamplingProfile", []
 Protocol.inspectorBackend.registerCommand("Memory.getSamplingProfile", [], ["profile"], false);
 
 // Network.
+Protocol.inspectorBackend.registerEnum("Network.ResourceType", {Document: "Document", Stylesheet: "Stylesheet", Image: "Image", Media: "Media", Font: "Font", Script: "Script", TextTrack: "TextTrack", XHR: "XHR", Fetch: "Fetch", EventSource: "EventSource", WebSocket: "WebSocket", Manifest: "Manifest", SignedExchange: "SignedExchange", Ping: "Ping", CSPViolationReport: "CSPViolationReport", Other: "Other"});
 Protocol.inspectorBackend.registerEnum("Network.ErrorReason", {Failed: "Failed", Aborted: "Aborted", TimedOut: "TimedOut", AccessDenied: "AccessDenied", ConnectionClosed: "ConnectionClosed", ConnectionReset: "ConnectionReset", ConnectionRefused: "ConnectionRefused", ConnectionAborted: "ConnectionAborted", ConnectionFailed: "ConnectionFailed", NameNotResolved: "NameNotResolved", InternetDisconnected: "InternetDisconnected", AddressUnreachable: "AddressUnreachable", BlockedByClient: "BlockedByClient", BlockedByResponse: "BlockedByResponse"});
 Protocol.inspectorBackend.registerEnum("Network.ConnectionType", {None: "none", Cellular2g: "cellular2g", Cellular3g: "cellular3g", Cellular4g: "cellular4g", Bluetooth: "bluetooth", Ethernet: "ethernet", Wifi: "wifi", Wimax: "wimax", Other: "other"});
 Protocol.inspectorBackend.registerEnum("Network.CookieSameSite", {Strict: "Strict", Lax: "Lax"});
 Protocol.inspectorBackend.registerEnum("Network.ResourcePriority", {VeryLow: "VeryLow", Low: "Low", Medium: "Medium", High: "High", VeryHigh: "VeryHigh"});
 Protocol.inspectorBackend.registerEnum("Network.RequestReferrerPolicy", {UnsafeUrl: "unsafe-url", NoReferrerWhenDowngrade: "no-referrer-when-downgrade", NoReferrer: "no-referrer", Origin: "origin", OriginWhenCrossOrigin: "origin-when-cross-origin", SameOrigin: "same-origin", StrictOrigin: "strict-origin", StrictOriginWhenCrossOrigin: "strict-origin-when-cross-origin"});
 Protocol.inspectorBackend.registerEnum("Network.CertificateTransparencyCompliance", {Unknown: "unknown", NotCompliant: "not-compliant", Compliant: "compliant"});
-Protocol.inspectorBackend.registerEnum("Network.BlockedReason", {Other: "other", Csp: "csp", MixedContent: "mixed-content", Origin: "origin", Inspector: "inspector", SubresourceFilter: "subresource-filter", ContentType: "content-type"});
+Protocol.inspectorBackend.registerEnum("Network.BlockedReason", {Other: "other", Csp: "csp", MixedContent: "mixed-content", Origin: "origin", Inspector: "inspector", SubresourceFilter: "subresource-filter", ContentType: "content-type", CollapsedByClient: "collapsed-by-client"});
 Protocol.inspectorBackend.registerEnum("Network.InitiatorType", {Parser: "parser", Script: "script", Preload: "preload", SignedExchange: "SignedExchange", Other: "other"});
 Protocol.inspectorBackend.registerEnum("Network.AuthChallengeSource", {Server: "Server", Proxy: "Proxy"});
 Protocol.inspectorBackend.registerEnum("Network.AuthChallengeResponseResponse", {Default: "Default", CancelAuth: "CancelAuth", ProvideCredentials: "ProvideCredentials"});
 Protocol.inspectorBackend.registerEnum("Network.InterceptionStage", {Request: "Request", HeadersReceived: "HeadersReceived"});
+Protocol.inspectorBackend.registerEnum("Network.SignedExchangeErrorField", {SignatureSig: "signatureSig", SignatureIntegrity: "signatureIntegrity", SignatureCertUrl: "signatureCertUrl", SignatureCertSha256: "signatureCertSha256", SignatureValidityUrl: "signatureValidityUrl", SignatureTimestamps: "signatureTimestamps"});
 Protocol.inspectorBackend.registerEvent("Network.dataReceived", ["requestId", "timestamp", "dataLength", "encodedDataLength"]);
 Protocol.inspectorBackend.registerEvent("Network.eventSourceMessageReceived", ["requestId", "timestamp", "eventName", "eventId", "data"]);
 Protocol.inspectorBackend.registerEvent("Network.loadingFailed", ["requestId", "timestamp", "type", "errorText", "canceled", "blockedReason"]);
-Protocol.inspectorBackend.registerEvent("Network.loadingFinished", ["requestId", "timestamp", "encodedDataLength", "blockedCrossSiteDocument"]);
+Protocol.inspectorBackend.registerEvent("Network.loadingFinished", ["requestId", "timestamp", "encodedDataLength", "shouldReportCorbBlocking"]);
 Protocol.inspectorBackend.registerEvent("Network.requestIntercepted", ["interceptionId", "request", "frameId", "resourceType", "isNavigationRequest", "isDownload", "redirectUrl", "authChallenge", "responseErrorReason", "responseStatusCode", "responseHeaders"]);
 Protocol.inspectorBackend.registerEvent("Network.requestServedFromCache", ["requestId"]);
 Protocol.inspectorBackend.registerEvent("Network.requestWillBeSent", ["requestId", "loaderId", "documentURL", "request", "timestamp", "wallTime", "initiator", "redirectResponse", "type", "frameId", "hasUserGesture"]);
@@ -344,7 +363,7 @@ Protocol.inspectorBackend.registerCommand("Network.setCookies", [{"name": "cooki
 Protocol.inspectorBackend.registerCommand("Network.setDataSizeLimitsForTest", [{"name": "maxTotalSize", "type": "number", "optional": false}, {"name": "maxResourceSize", "type": "number", "optional": false}], [], false);
 Protocol.inspectorBackend.registerCommand("Network.setExtraHTTPHeaders", [{"name": "headers", "type": "object", "optional": false}], [], false);
 Protocol.inspectorBackend.registerCommand("Network.setRequestInterception", [{"name": "patterns", "type": "object", "optional": false}], [], false);
-Protocol.inspectorBackend.registerCommand("Network.setUserAgentOverride", [{"name": "userAgent", "type": "string", "optional": false}], [], false);
+Protocol.inspectorBackend.registerCommand("Network.setUserAgentOverride", [{"name": "userAgent", "type": "string", "optional": false}, {"name": "acceptLanguage", "type": "string", "optional": true}, {"name": "platform", "type": "string", "optional": true}], [], false);
 
 // Overlay.
 Protocol.inspectorBackend.registerEnum("Overlay.InspectMode", {SearchForNode: "searchForNode", SearchForUAShadowDOM: "searchForUAShadowDOM", None: "none"});
@@ -365,12 +384,12 @@ Protocol.inspectorBackend.registerCommand("Overlay.setShowDebugBorders", [{"name
 Protocol.inspectorBackend.registerCommand("Overlay.setShowFPSCounter", [{"name": "show", "type": "boolean", "optional": false}], [], false);
 Protocol.inspectorBackend.registerCommand("Overlay.setShowPaintRects", [{"name": "result", "type": "boolean", "optional": false}], [], false);
 Protocol.inspectorBackend.registerCommand("Overlay.setShowScrollBottleneckRects", [{"name": "show", "type": "boolean", "optional": false}], [], false);
+Protocol.inspectorBackend.registerCommand("Overlay.setShowHitTestBorders", [{"name": "show", "type": "boolean", "optional": false}], [], false);
 Protocol.inspectorBackend.registerCommand("Overlay.setShowViewportSizeOnResize", [{"name": "show", "type": "boolean", "optional": false}], [], false);
 Protocol.inspectorBackend.registerCommand("Overlay.setSuspended", [{"name": "suspended", "type": "boolean", "optional": false}], [], false);
 
 // Page.
-Protocol.inspectorBackend.registerEnum("Page.ResourceType", {Document: "Document", Stylesheet: "Stylesheet", Image: "Image", Media: "Media", Font: "Font", Script: "Script", TextTrack: "TextTrack", XHR: "XHR", Fetch: "Fetch", EventSource: "EventSource", WebSocket: "WebSocket", Manifest: "Manifest", SignedExchange: "SignedExchange", Other: "Other"});
-Protocol.inspectorBackend.registerEnum("Page.TransitionType", {Link: "link", Typed: "typed", Auto_bookmark: "auto_bookmark", Auto_subframe: "auto_subframe", Manual_subframe: "manual_subframe", Generated: "generated", Auto_toplevel: "auto_toplevel", Form_submit: "form_submit", Reload: "reload", Keyword: "keyword", Keyword_generated: "keyword_generated", Other: "other"});
+Protocol.inspectorBackend.registerEnum("Page.TransitionType", {Link: "link", Typed: "typed", Address_bar: "address_bar", Auto_bookmark: "auto_bookmark", Auto_subframe: "auto_subframe", Manual_subframe: "manual_subframe", Generated: "generated", Auto_toplevel: "auto_toplevel", Form_submit: "form_submit", Reload: "reload", Keyword: "keyword", Keyword_generated: "keyword_generated", Other: "other"});
 Protocol.inspectorBackend.registerEnum("Page.DialogType", {Alert: "alert", Confirm: "confirm", Prompt: "prompt", Beforeunload: "beforeunload"});
 Protocol.inspectorBackend.registerEvent("Page.domContentEventFired", ["timestamp"]);
 Protocol.inspectorBackend.registerEvent("Page.frameAttached", ["frameId", "parentFrameId", "stack"]);
@@ -391,10 +410,12 @@ Protocol.inspectorBackend.registerEvent("Page.navigatedWithinDocument", ["frameI
 Protocol.inspectorBackend.registerEvent("Page.screencastFrame", ["data", "metadata", "sessionId"]);
 Protocol.inspectorBackend.registerEvent("Page.screencastVisibilityChanged", ["visible"]);
 Protocol.inspectorBackend.registerEvent("Page.windowOpen", ["url", "windowName", "windowFeatures", "userGesture"]);
+Protocol.inspectorBackend.registerEvent("Page.compilationCacheProduced", ["url", "data"]);
 Protocol.inspectorBackend.registerCommand("Page.addScriptToEvaluateOnLoad", [{"name": "scriptSource", "type": "string", "optional": false}], ["identifier"], false);
-Protocol.inspectorBackend.registerCommand("Page.addScriptToEvaluateOnNewDocument", [{"name": "source", "type": "string", "optional": false}], ["identifier"], false);
+Protocol.inspectorBackend.registerCommand("Page.addScriptToEvaluateOnNewDocument", [{"name": "source", "type": "string", "optional": false}, {"name": "worldName", "type": "string", "optional": true}], ["identifier"], false);
 Protocol.inspectorBackend.registerCommand("Page.bringToFront", [], [], false);
 Protocol.inspectorBackend.registerCommand("Page.captureScreenshot", [{"name": "format", "type": "string", "optional": true}, {"name": "quality", "type": "number", "optional": true}, {"name": "clip", "type": "object", "optional": true}, {"name": "fromSurface", "type": "boolean", "optional": true}], ["data"], false);
+Protocol.inspectorBackend.registerCommand("Page.captureSnapshot", [{"name": "format", "type": "string", "optional": true}], ["data"], false);
 Protocol.inspectorBackend.registerCommand("Page.clearDeviceMetricsOverride", [], [], false);
 Protocol.inspectorBackend.registerCommand("Page.clearDeviceOrientationOverride", [], [], false);
 Protocol.inspectorBackend.registerCommand("Page.clearGeolocationOverride", [], [], false);
@@ -407,6 +428,7 @@ Protocol.inspectorBackend.registerCommand("Page.getCookies", [], ["cookies"], fa
 Protocol.inspectorBackend.registerCommand("Page.getFrameTree", [], ["frameTree"], false);
 Protocol.inspectorBackend.registerCommand("Page.getLayoutMetrics", [], ["layoutViewport", "visualViewport", "contentSize"], false);
 Protocol.inspectorBackend.registerCommand("Page.getNavigationHistory", [], ["currentIndex", "entries"], false);
+Protocol.inspectorBackend.registerCommand("Page.resetNavigationHistory", [], [], false);
 Protocol.inspectorBackend.registerCommand("Page.getResourceContent", [{"name": "frameId", "type": "string", "optional": false}, {"name": "url", "type": "string", "optional": false}], ["content", "base64Encoded"], false);
 Protocol.inspectorBackend.registerCommand("Page.getResourceTree", [], ["frameTree"], false);
 Protocol.inspectorBackend.registerCommand("Page.handleJavaScriptDialog", [{"name": "accept", "type": "boolean", "optional": false}, {"name": "promptText", "type": "string", "optional": true}], [], false);
@@ -423,6 +445,8 @@ Protocol.inspectorBackend.registerCommand("Page.setAdBlockingEnabled", [{"name":
 Protocol.inspectorBackend.registerCommand("Page.setBypassCSP", [{"name": "enabled", "type": "boolean", "optional": false}], [], false);
 Protocol.inspectorBackend.registerCommand("Page.setDeviceMetricsOverride", [{"name": "width", "type": "number", "optional": false}, {"name": "height", "type": "number", "optional": false}, {"name": "deviceScaleFactor", "type": "number", "optional": false}, {"name": "mobile", "type": "boolean", "optional": false}, {"name": "scale", "type": "number", "optional": true}, {"name": "screenWidth", "type": "number", "optional": true}, {"name": "screenHeight", "type": "number", "optional": true}, {"name": "positionX", "type": "number", "optional": true}, {"name": "positionY", "type": "number", "optional": true}, {"name": "dontSetVisibleSize", "type": "boolean", "optional": true}, {"name": "screenOrientation", "type": "object", "optional": true}, {"name": "viewport", "type": "object", "optional": true}], [], false);
 Protocol.inspectorBackend.registerCommand("Page.setDeviceOrientationOverride", [{"name": "alpha", "type": "number", "optional": false}, {"name": "beta", "type": "number", "optional": false}, {"name": "gamma", "type": "number", "optional": false}], [], false);
+Protocol.inspectorBackend.registerCommand("Page.setFontFamilies", [{"name": "fontFamilies", "type": "object", "optional": false}], [], false);
+Protocol.inspectorBackend.registerCommand("Page.setFontSizes", [{"name": "fontSizes", "type": "object", "optional": false}], [], false);
 Protocol.inspectorBackend.registerCommand("Page.setDocumentContent", [{"name": "frameId", "type": "string", "optional": false}, {"name": "html", "type": "string", "optional": false}], [], false);
 Protocol.inspectorBackend.registerCommand("Page.setDownloadBehavior", [{"name": "behavior", "type": "string", "optional": false}, {"name": "downloadPath", "type": "string", "optional": true}], [], false);
 Protocol.inspectorBackend.registerCommand("Page.setGeolocationOverride", [{"name": "latitude", "type": "number", "optional": true}, {"name": "longitude", "type": "number", "optional": true}, {"name": "accuracy", "type": "number", "optional": true}], [], false);
@@ -434,11 +458,17 @@ Protocol.inspectorBackend.registerCommand("Page.crash", [], [], false);
 Protocol.inspectorBackend.registerCommand("Page.close", [], [], false);
 Protocol.inspectorBackend.registerCommand("Page.setWebLifecycleState", [{"name": "state", "type": "string", "optional": false}], [], false);
 Protocol.inspectorBackend.registerCommand("Page.stopScreencast", [], [], false);
+Protocol.inspectorBackend.registerCommand("Page.setProduceCompilationCache", [{"name": "enabled", "type": "boolean", "optional": false}], [], false);
+Protocol.inspectorBackend.registerCommand("Page.addCompilationCache", [{"name": "url", "type": "string", "optional": false}, {"name": "data", "type": "string", "optional": false}], [], false);
+Protocol.inspectorBackend.registerCommand("Page.clearCompilationCache", [], [], false);
+Protocol.inspectorBackend.registerCommand("Page.generateTestReport", [{"name": "message", "type": "string", "optional": false}, {"name": "group", "type": "string", "optional": true}], [], false);
+Protocol.inspectorBackend.registerCommand("Page.waitForDebugger", [], [], false);
 
 // Performance.
 Protocol.inspectorBackend.registerEvent("Performance.metrics", ["metrics", "title"]);
 Protocol.inspectorBackend.registerCommand("Performance.disable", [], [], false);
 Protocol.inspectorBackend.registerCommand("Performance.enable", [], [], false);
+Protocol.inspectorBackend.registerCommand("Performance.setTimeDomain", [{"name": "timeDomain", "type": "string", "optional": false}], [], false);
 Protocol.inspectorBackend.registerCommand("Performance.getMetrics", [], ["metrics"], false);
 
 // Security.
@@ -487,6 +517,7 @@ Protocol.inspectorBackend.registerCommand("Storage.untrackIndexedDBForOrigin", [
 
 // SystemInfo.
 Protocol.inspectorBackend.registerCommand("SystemInfo.getInfo", [], ["gpu", "modelName", "modelVersion", "commandLine"], false);
+Protocol.inspectorBackend.registerCommand("SystemInfo.getProcessInfo", [], ["processInfo"], false);
 
 // Target.
 Protocol.inspectorBackend.registerEvent("Target.attachedToTarget", ["sessionId", "targetInfo", "waitingForDebugger"]);
@@ -494,19 +525,22 @@ Protocol.inspectorBackend.registerEvent("Target.detachedFromTarget", ["sessionId
 Protocol.inspectorBackend.registerEvent("Target.receivedMessageFromTarget", ["sessionId", "message", "targetId"]);
 Protocol.inspectorBackend.registerEvent("Target.targetCreated", ["targetInfo"]);
 Protocol.inspectorBackend.registerEvent("Target.targetDestroyed", ["targetId"]);
+Protocol.inspectorBackend.registerEvent("Target.targetCrashed", ["targetId", "status", "errorCode"]);
 Protocol.inspectorBackend.registerEvent("Target.targetInfoChanged", ["targetInfo"]);
 Protocol.inspectorBackend.registerCommand("Target.activateTarget", [{"name": "targetId", "type": "string", "optional": false}], [], false);
-Protocol.inspectorBackend.registerCommand("Target.attachToTarget", [{"name": "targetId", "type": "string", "optional": false}], ["sessionId"], false);
+Protocol.inspectorBackend.registerCommand("Target.attachToTarget", [{"name": "targetId", "type": "string", "optional": false}, {"name": "flatten", "type": "boolean", "optional": true}], ["sessionId"], false);
+Protocol.inspectorBackend.registerCommand("Target.attachToBrowserTarget", [], ["sessionId"], false);
 Protocol.inspectorBackend.registerCommand("Target.closeTarget", [{"name": "targetId", "type": "string", "optional": false}], ["success"], false);
+Protocol.inspectorBackend.registerCommand("Target.exposeDevToolsProtocol", [{"name": "targetId", "type": "string", "optional": false}, {"name": "bindingName", "type": "string", "optional": true}], [], false);
 Protocol.inspectorBackend.registerCommand("Target.createBrowserContext", [], ["browserContextId"], false);
 Protocol.inspectorBackend.registerCommand("Target.getBrowserContexts", [], ["browserContextIds"], false);
 Protocol.inspectorBackend.registerCommand("Target.createTarget", [{"name": "url", "type": "string", "optional": false}, {"name": "width", "type": "number", "optional": true}, {"name": "height", "type": "number", "optional": true}, {"name": "browserContextId", "type": "string", "optional": true}, {"name": "enableBeginFrameControl", "type": "boolean", "optional": true}], ["targetId"], false);
 Protocol.inspectorBackend.registerCommand("Target.detachFromTarget", [{"name": "sessionId", "type": "string", "optional": true}, {"name": "targetId", "type": "string", "optional": true}], [], false);
 Protocol.inspectorBackend.registerCommand("Target.disposeBrowserContext", [{"name": "browserContextId", "type": "string", "optional": false}], [], false);
-Protocol.inspectorBackend.registerCommand("Target.getTargetInfo", [{"name": "targetId", "type": "string", "optional": false}], ["targetInfo"], false);
+Protocol.inspectorBackend.registerCommand("Target.getTargetInfo", [{"name": "targetId", "type": "string", "optional": true}], ["targetInfo"], false);
 Protocol.inspectorBackend.registerCommand("Target.getTargets", [], ["targetInfos"], false);
 Protocol.inspectorBackend.registerCommand("Target.sendMessageToTarget", [{"name": "message", "type": "string", "optional": false}, {"name": "sessionId", "type": "string", "optional": true}, {"name": "targetId", "type": "string", "optional": true}], [], false);
-Protocol.inspectorBackend.registerCommand("Target.setAutoAttach", [{"name": "autoAttach", "type": "boolean", "optional": false}, {"name": "waitForDebuggerOnStart", "type": "boolean", "optional": false}], [], false);
+Protocol.inspectorBackend.registerCommand("Target.setAutoAttach", [{"name": "autoAttach", "type": "boolean", "optional": false}, {"name": "waitForDebuggerOnStart", "type": "boolean", "optional": false}, {"name": "flatten", "type": "boolean", "optional": true}], [], false);
 Protocol.inspectorBackend.registerCommand("Target.setDiscoverTargets", [{"name": "discover", "type": "boolean", "optional": false}], [], false);
 Protocol.inspectorBackend.registerCommand("Target.setRemoteLocations", [{"name": "locations", "type": "object", "optional": false}], [], false);
 
@@ -526,6 +560,24 @@ Protocol.inspectorBackend.registerCommand("Tracing.getCategories", [], ["categor
 Protocol.inspectorBackend.registerCommand("Tracing.recordClockSyncMarker", [{"name": "syncId", "type": "string", "optional": false}], [], false);
 Protocol.inspectorBackend.registerCommand("Tracing.requestMemoryDump", [], ["dumpGuid", "success"], false);
 Protocol.inspectorBackend.registerCommand("Tracing.start", [{"name": "categories", "type": "string", "optional": true}, {"name": "options", "type": "string", "optional": true}, {"name": "bufferUsageReportingInterval", "type": "number", "optional": true}, {"name": "transferMode", "type": "string", "optional": true}, {"name": "streamCompression", "type": "string", "optional": true}, {"name": "traceConfig", "type": "object", "optional": true}], [], false);
+
+// Testing.
+Protocol.inspectorBackend.registerCommand("Testing.generateTestReport", [{"name": "message", "type": "string", "optional": false}, {"name": "group", "type": "string", "optional": true}], [], false);
+
+// Fetch.
+Protocol.inspectorBackend.registerEnum("Fetch.RequestStage", {Request: "Request", Response: "Response"});
+Protocol.inspectorBackend.registerEnum("Fetch.AuthChallengeSource", {Server: "Server", Proxy: "Proxy"});
+Protocol.inspectorBackend.registerEnum("Fetch.AuthChallengeResponseResponse", {Default: "Default", CancelAuth: "CancelAuth", ProvideCredentials: "ProvideCredentials"});
+Protocol.inspectorBackend.registerEvent("Fetch.requestPaused", ["requestId", "request", "frameId", "resourceType", "responseErrorReason", "responseStatusCode", "responseHeaders"]);
+Protocol.inspectorBackend.registerEvent("Fetch.authRequired", ["requestId", "request", "frameId", "resourceType", "authChallenge"]);
+Protocol.inspectorBackend.registerCommand("Fetch.disable", [], [], false);
+Protocol.inspectorBackend.registerCommand("Fetch.enable", [{"name": "patterns", "type": "object", "optional": true}, {"name": "handleAuthRequests", "type": "boolean", "optional": true}], [], false);
+Protocol.inspectorBackend.registerCommand("Fetch.failRequest", [{"name": "requestId", "type": "string", "optional": false}, {"name": "errorReason", "type": "string", "optional": false}], [], false);
+Protocol.inspectorBackend.registerCommand("Fetch.fulfillRequest", [{"name": "requestId", "type": "string", "optional": false}, {"name": "responseCode", "type": "number", "optional": false}, {"name": "responseHeaders", "type": "object", "optional": false}, {"name": "body", "type": "string", "optional": true}, {"name": "responsePhrase", "type": "string", "optional": true}], [], false);
+Protocol.inspectorBackend.registerCommand("Fetch.continueRequest", [{"name": "requestId", "type": "string", "optional": false}, {"name": "url", "type": "string", "optional": true}, {"name": "method", "type": "string", "optional": true}, {"name": "postData", "type": "string", "optional": true}, {"name": "headers", "type": "object", "optional": true}], [], false);
+Protocol.inspectorBackend.registerCommand("Fetch.continueWithAuth", [{"name": "requestId", "type": "string", "optional": false}, {"name": "authChallengeResponse", "type": "object", "optional": false}], [], false);
+Protocol.inspectorBackend.registerCommand("Fetch.getResponseBody", [{"name": "requestId", "type": "string", "optional": false}], ["body", "base64Encoded"], false);
+Protocol.inspectorBackend.registerCommand("Fetch.takeResponseBodyAsStream", [{"name": "requestId", "type": "string", "optional": false}], ["stream"], false);
 
 // Debugger.
 Protocol.inspectorBackend.registerEnum("Debugger.ScopeType", {Global: "global", Local: "local", With: "with", Closure: "closure", Catch: "catch", Block: "block", Script: "script", Eval: "eval", Module: "module"});
@@ -547,7 +599,6 @@ Protocol.inspectorBackend.registerCommand("Debugger.pauseOnAsyncCall", [{"name":
 Protocol.inspectorBackend.registerCommand("Debugger.removeBreakpoint", [{"name": "breakpointId", "type": "string", "optional": false}], [], false);
 Protocol.inspectorBackend.registerCommand("Debugger.restartFrame", [{"name": "callFrameId", "type": "string", "optional": false}], ["callFrames", "asyncStackTrace", "asyncStackTraceId"], false);
 Protocol.inspectorBackend.registerCommand("Debugger.resume", [], [], false);
-Protocol.inspectorBackend.registerCommand("Debugger.scheduleStepIntoAsync", [], [], false);
 Protocol.inspectorBackend.registerCommand("Debugger.searchInContent", [{"name": "scriptId", "type": "string", "optional": false}, {"name": "query", "type": "string", "optional": false}, {"name": "caseSensitive", "type": "boolean", "optional": true}, {"name": "isRegex", "type": "boolean", "optional": true}], ["result"], false);
 Protocol.inspectorBackend.registerCommand("Debugger.setAsyncCallStackDepth", [{"name": "maxDepth", "type": "number", "optional": false}], [], false);
 Protocol.inspectorBackend.registerCommand("Debugger.setBlackboxPatterns", [{"name": "patterns", "type": "object", "optional": false}], [], false);
@@ -602,11 +653,12 @@ Protocol.inspectorBackend.registerCommand("Profiler.takeTypeProfile", [], ["resu
 
 // Runtime.
 Protocol.inspectorBackend.registerEnum("Runtime.RemoteObjectType", {Object: "object", Function: "function", Undefined: "undefined", String: "string", Number: "number", Boolean: "boolean", Symbol: "symbol", Bigint: "bigint"});
-Protocol.inspectorBackend.registerEnum("Runtime.RemoteObjectSubtype", {Array: "array", Null: "null", Node: "node", Regexp: "regexp", Date: "date", Map: "map", Set: "set", Weakmap: "weakmap", Weakset: "weakset", Iterator: "iterator", Generator: "generator", Error: "error", Proxy: "proxy", Promise: "promise", Typedarray: "typedarray"});
+Protocol.inspectorBackend.registerEnum("Runtime.RemoteObjectSubtype", {Array: "array", Null: "null", Node: "node", Regexp: "regexp", Date: "date", Map: "map", Set: "set", Weakmap: "weakmap", Weakset: "weakset", Iterator: "iterator", Generator: "generator", Error: "error", Proxy: "proxy", Promise: "promise", Typedarray: "typedarray", Arraybuffer: "arraybuffer", Dataview: "dataview"});
 Protocol.inspectorBackend.registerEnum("Runtime.ObjectPreviewType", {Object: "object", Function: "function", Undefined: "undefined", String: "string", Number: "number", Boolean: "boolean", Symbol: "symbol", Bigint: "bigint"});
 Protocol.inspectorBackend.registerEnum("Runtime.ObjectPreviewSubtype", {Array: "array", Null: "null", Node: "node", Regexp: "regexp", Date: "date", Map: "map", Set: "set", Weakmap: "weakmap", Weakset: "weakset", Iterator: "iterator", Generator: "generator", Error: "error"});
 Protocol.inspectorBackend.registerEnum("Runtime.PropertyPreviewType", {Object: "object", Function: "function", Undefined: "undefined", String: "string", Number: "number", Boolean: "boolean", Symbol: "symbol", Accessor: "accessor", Bigint: "bigint"});
 Protocol.inspectorBackend.registerEnum("Runtime.PropertyPreviewSubtype", {Array: "array", Null: "null", Node: "node", Regexp: "regexp", Date: "date", Map: "map", Set: "set", Weakmap: "weakmap", Weakset: "weakset", Iterator: "iterator", Generator: "generator", Error: "error"});
+Protocol.inspectorBackend.registerEvent("Runtime.bindingCalled", ["name", "payload", "executionContextId"]);
 Protocol.inspectorBackend.registerEvent("Runtime.consoleAPICalled", ["type", "args", "executionContextId", "timestamp", "stackTrace", "context"]);
 Protocol.inspectorBackend.registerEvent("Runtime.exceptionRevoked", ["reason", "exceptionId"]);
 Protocol.inspectorBackend.registerEvent("Runtime.exceptionThrown", ["timestamp", "exceptionDetails"]);
@@ -630,8 +682,12 @@ Protocol.inspectorBackend.registerCommand("Runtime.releaseObject", [{"name": "ob
 Protocol.inspectorBackend.registerCommand("Runtime.releaseObjectGroup", [{"name": "objectGroup", "type": "string", "optional": false}], [], false);
 Protocol.inspectorBackend.registerCommand("Runtime.runIfWaitingForDebugger", [], [], false);
 Protocol.inspectorBackend.registerCommand("Runtime.runScript", [{"name": "scriptId", "type": "string", "optional": false}, {"name": "executionContextId", "type": "number", "optional": true}, {"name": "objectGroup", "type": "string", "optional": true}, {"name": "silent", "type": "boolean", "optional": true}, {"name": "includeCommandLineAPI", "type": "boolean", "optional": true}, {"name": "returnByValue", "type": "boolean", "optional": true}, {"name": "generatePreview", "type": "boolean", "optional": true}, {"name": "awaitPromise", "type": "boolean", "optional": true}], ["result", "exceptionDetails"], false);
+Protocol.inspectorBackend.registerCommand("Runtime.setAsyncCallStackDepth", [{"name": "maxDepth", "type": "number", "optional": false}], [], false);
 Protocol.inspectorBackend.registerCommand("Runtime.setCustomObjectFormatterEnabled", [{"name": "enabled", "type": "boolean", "optional": false}], [], false);
+Protocol.inspectorBackend.registerCommand("Runtime.setMaxCallStackSizeToCapture", [{"name": "size", "type": "number", "optional": false}], [], false);
 Protocol.inspectorBackend.registerCommand("Runtime.terminateExecution", [], [], false);
+Protocol.inspectorBackend.registerCommand("Runtime.addBinding", [{"name": "name", "type": "string", "optional": false}, {"name": "executionContextId", "type": "number", "optional": true}], [], false);
+Protocol.inspectorBackend.registerCommand("Runtime.removeBinding", [{"name": "name", "type": "string", "optional": false}], [], false);
 
 // Schema.
 Protocol.inspectorBackend.registerCommand("Schema.getDomains", [], ["domains"], false);
