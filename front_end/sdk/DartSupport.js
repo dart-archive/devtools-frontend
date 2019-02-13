@@ -9,8 +9,13 @@ Dart = {};
 Dart._NotificationHandler = class {
 
   static register() {
-    SDK.targetManager.addModelListener(
-      SDK.DebuggerModel, SDK.DebuggerModel.Events.DebuggerPaused, this._debuggerPaused);
+    // Guard against the problem that in tests "SDK" is not defined.
+    if (window["SDK"]) {
+      SDK.targetManager.addModelListener(
+          SDK.DebuggerModel,
+          SDK.DebuggerModel.Events.DebuggerPaused, 
+          this._debuggerPaused);
+    }
   }
 
   static async _isInDartContext() {
