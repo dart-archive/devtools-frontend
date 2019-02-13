@@ -1,5 +1,20 @@
 * Dart DevTools Changes
 
+## 0.0.3
+ * Make the console name change to Dart Console/JavaScript Console depending
+   what context we think we're in.
+ * Go back to the light theme as a default.
+ * In situations where JS has optimized away 'this', explicitly fetch it and
+   make it and its fields available in evaluations. Most obviously this happens
+   in closures inside a method when they don't access 'this'.
+ * Update the Devtools protocol files to the correct version for the commit we're
+   based on.
+ * Only pass actual fields to the expression function, not getters. Getters can
+   cause code to run, which can cause exceptions in the evaluation.
+ * When we hit Enter, autocompletion tries to check if what we have is a valid
+   JavaScript expression. That can fail, or time out for Dart expressions, so
+   disable it.
+
 ## 0.0.2
  * When blackboxing the SDK it doesn't stop on Dart exceptions, since they're in
    blackboxed source. Set the blackbox by source range to get around this. This
