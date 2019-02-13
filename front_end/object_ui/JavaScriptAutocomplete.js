@@ -601,7 +601,9 @@ ObjectUI.JavaScriptAutocomplete = class {
    * @return {!Promise<boolean>}
    */
   static async isExpressionComplete(expression) {
-    // If we may have Dart expressions that aren't valid JavaScript this isn't reliable
+    // If we may have Dart expressions that aren't valid JavaScript this isn't
+    // reliable, and may actually time out, resulting in no response to an
+    // "Enter" key event for several seconds. So avoid the check entirely.
     return true;
   }
 };
