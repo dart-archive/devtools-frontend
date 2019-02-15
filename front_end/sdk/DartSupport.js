@@ -116,10 +116,6 @@ window.$dartExpressionFor = async function (executionContext, dartExpression) {
   // checks if it starts with parentheses.
   // TODO(alanknight): Have a better way of escaping to JS.
   if (dartExpression.startsWith('(')) return dartExpression;
-  // We can't shadow 'this' with a parameter in JS, so replace references to it
-  // with a variable named THIS.
-  const thisMatcher = /\bthis\b/g;
-  dartExpression = dartExpression.replace(thisMatcher, 'THIS');
 
   const selectedFrame = executionContext.debuggerModel.selectedCallFrame();
   // We're not stopped at a breakpoint, treat it as JS.
