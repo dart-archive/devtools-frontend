@@ -77,10 +77,10 @@ String urlToPackagePath(String originalUrl) {
 
 /// A class to describe all the compilation information and allow comparing it
 /// in tests.
-/// 
+///
 /// We will provide [noteCurrent] as a callback to JS code, which will then
 /// create the static [current] value. We can then compare that to an expected
-/// value. 
+/// value.
 class CompilationContext {
   static CompilationContext current;
 
@@ -176,6 +176,7 @@ class UILocation {
   // url would really be on UISourceCode.
   var _url;
   url() => _url;
+  extension() => 'dart';
 }
 
 /// A fake for the devtools SDK.DebuggerModel.CallFrame.
@@ -201,8 +202,8 @@ class FakeCallFrame {
   }
 
   /// A hard-coded scope chain for a sample file in the web directory.
-  final scopeChainWeb = [
-        Bindings('self', {'a': 1, 'b': 2, 'c': 3}),
+  get scopeChainWeb => [
+        Bindings(functionName, {'a': 1, 'b': 2, 'c': 3}),
         Bindings('library',
             {'foo__bar__web__main': _libraryBindingsWeb, 'gets_ignored': 4}),
         Bindings('global_ignored', {})
@@ -213,8 +214,8 @@ class FakeCallFrame {
       Bindings('foo__bar__web__main', {'_private': 'lib_prop'});
 
   /// A hard-coded scope chain for a sample file in the lib directory.
-  final scopeChainLib = [
-        Bindings('self', {'x': 99}),
+  get scopeChainLib => [
+        Bindings(functionName, {'x': 99}),
         Bindings('library',
             {'foo__bar__library': _libraryBindingsLib, 'gets_ignored': 4}),
         Bindings('global_ignored', {})

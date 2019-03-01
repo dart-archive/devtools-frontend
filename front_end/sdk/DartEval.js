@@ -149,9 +149,10 @@ Dart._Evaluation = class {
             'module',
             'targetName',
             'currentFile'];
-        const _encode = (name, value) => name + '=' + encodeURIComponent(value);
-        const parameters = singleParameters.map(
-            (value, i) => _encode(parameterNames[i], value));
+        const _encode = (name, value) => value && name + '=' + encodeURIComponent(value);
+        const parameters = singleParameters
+            .map((value, i) => _encode(parameterNames[i], value))
+            .filter(value => value); // Remove the null values.
         const variables = scopeVariables.map(
             (property) => _encode('property', property));
         return '?' + parameters.concat(variables).join('&');
