@@ -13,7 +13,7 @@ Dart._NotificationHandler = class {
     if (window["SDK"]) {
       SDK.targetManager.addModelListener(
           SDK.DebuggerModel,
-          SDK.DebuggerModel.Events.DebuggerPaused, 
+          SDK.DebuggerModel.Events.DebuggerPaused,
           this._debuggerPaused);
     }
   }
@@ -25,15 +25,9 @@ Dart._NotificationHandler = class {
     const selectedFrame = executionContext.debuggerModel.callFrames[0];
     // We're not stopped at a breakpoint, treat it as JS.
     if (!selectedFrame) return false;
-    // Find the Dart library, if any.
-    const evaluation = new Dart._Evaluation(
-      selectedFrame,
-      executionContext,
-      '',
-      false);
-    const enclosingLibraryName = await evaluation.currentLibrary();
-    // If there's an enclosing library name, then we're in a Dart context.
-    return enclosingLibraryName != null;
+    const location = Bindings.debuggerWorkspaceBinding
+            .rawLocationToUILocation(selectedFrame.functionLocation());
+    return location.uiSourceCode.extension() == 'dart';
   }
 
   static async _debuggerPaused(event) {
@@ -120,14 +114,17 @@ window.$dartExpressionFor = async function (executionContext, dartExpression) {
   const selectedFrame = executionContext.debuggerModel.selectedCallFrame();
   // We're not stopped at a breakpoint, treat it as JS.
   if (!selectedFrame) return dartExpression;
+
+  const location = Bindings.debuggerWorkspaceBinding
+      .rawLocationToUILocation(selectedFrame.functionLocation());
+  if (location.uiSourceCode.extension() != 'dart') return dartExpression;
+
   const evaluation = new Dart._Evaluation(
     selectedFrame,
     executionContext,
     dartExpression,
     false);
   const enclosingLibraryName = await evaluation.currentLibrary();
-  if (!enclosingLibraryName) return dartExpression;
-
   try {
     const url = await evaluation.url();
     const response = await Dart.fetch(url);

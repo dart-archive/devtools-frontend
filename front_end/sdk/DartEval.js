@@ -152,9 +152,10 @@ Dart._Evaluation = class {
             'module',
             'targetName',
             'currentFile'];
-        const _encode = (name, value) => name + '=' + encodeURIComponent(value);
-        const parameters = singleParameters.map(
-            (value, i) => _encode(parameterNames[i], value));
+        const _encode = (name, value) => value && name + '=' + encodeURIComponent(value);
+        const parameters = singleParameters
+            .map((value, i) => _encode(parameterNames[i], value))
+            .filter(value => value); // Remove the null values.
         const variables = scopeVariables.map(
             (property) => _encode('property', property));
         return '?' + parameters.concat(variables).join('&');
@@ -173,9 +174,13 @@ Dart._Evaluation = class {
         }
         // If DDC hasn't given a name to the function, then v8 will provide one,
         // which will be of the form
-        //     dart_library.library.thing_we_want.actualName
-        const functionName = this.callFrame.functionName;
-        if (functionName.startsWith('dart_library.library')) {
+        // dart_library.library.thing_we_want.actualName But it might not be the
+        // frame we're on, it might be an enclosing function. This is
+        // particularly common with closures like "test('name', () { ..."  So
+        // get the whole list and look for one that identifies a Dart library.
+        const functionNames = this.callFrame.scopeChain().map(scope => scope.name());
+        for (const functionName of functionNames) {
+          if (functionName && functionName.startsWith('dart_library.library')) {
             const name = functionName.split('.')[2];
             // If we're in the Dart SDK, treat that as being in JS,don't have sources.
             // TODO(alanknight): Considering evaluating as Dart when in the SDK,
@@ -183,6 +188,7 @@ Dart._Evaluation = class {
             if (name == 'dart') return null;
             this._enclosingLibraryName = name;
             return name;
+          }
         }
         // Methods have names, so using the functionName doesn't work, but
         // methods have a thisObject, which follows a similar naming convention,
@@ -198,6 +204,7 @@ Dart._Evaluation = class {
         // we need this is for main, in which case we can find the library name
         // from the module Id, but it's not clear, so let's be sure.
         const moduleId = await this._currentModuleId();
+        const functionName = functionNames[0];
         const expression = 'var module = dart._loadedModules.get("' + moduleId + '"); '
             + 'Object.keys(module).find(x => module[x]["' + functionName + '"])';
         const candidates = await this.callFrame.evaluate(
