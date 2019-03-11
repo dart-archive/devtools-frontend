@@ -60,7 +60,7 @@ Dart._JsScopeChain = class {
         // one that has a valid [this], to avoid including its values more than
         // once.
         for (const scope of this.methodScopes) {
-            await scope._addThisIfMissing();
+            await scope._addThisIfMissing(libraryName);
             const thisScope = await scope.thisScope(libraryName);
             if (thisScope.isNotEmpty()) return thisScope;
         }
@@ -109,11 +109,7 @@ Dart._Scope = class _Scope {
     ///     properties in this particular scope
     constructor(scope, name, properties) {
         this.name = name || scope.name;
-        // If we're being given raw properties, filter them for just fields.
-        // We assume that if we're given a scope that's already been done.
-        const justFields = properties &&
-            properties.filter(prop => !(prop.getter || prop.setter));
-        this.properties = justFields || scope.properties;
+        this.properties = properties || scope.properties;
     }
 
     /// The property with the given name, or undefined if there is no such
