@@ -93,11 +93,7 @@ Dart._Scope = class _Scope {
     ///     properties in this particular scope
     constructor(scope, name, properties) {
         this.name = name || scope.name;
-        // If we're being given raw properties, filter them for just fields.
-        // We assume that if we're given a scope that's already been done.
-        const justFields = properties && 
-            properties.filter(prop => !(prop.getter || prop.setter));
-        this.properties = justFields || scope.properties;
+        this.properties = properties || scope.properties;
     }
 
     /// The property with the given name, or undefined if there is no such
@@ -148,12 +144,12 @@ Dart._Scope = class _Scope {
     ///
     /// @param {SDK.RemoteObjectProperty} remoteObject
     /// @return {List<SDK.RemoteObjectProperty}
-    expand(remoteObject) {
+    async expand(remoteObject) {
         if (!remoteObject || remoteObject.name.startsWith('_')) {
             return [];
         }
-        return remoteObject.value.getAllProperties(false, false)
-            .then(result => result.properties);
+        var result = await remoteObject.value.getAllProperties(false, false);
+        return result.properties;
     }
 }
 
@@ -183,7 +179,7 @@ Dart._MethodScope = class _MethodScope extends Dart._Scope {
     /// @return {Dart._ThisScope}
     async thisScope(libraryName) {
         if (!this.self) {
-          await this._addThisIfMissing(libraryName);
+            await this._addThisIfMissing(libraryName);
         }
         if (this._thisScope) return this._thisScope;
 
@@ -209,21 +205,21 @@ Dart._MethodScope = class _MethodScope extends Dart._Scope {
         // return 'this'. Finding the current library is a bit painful.
         // This is very specific to the legacy module system.
         const findCurrent = '(function () {'
-             + 'let libs = dart_library.debuggerLibraries();'
-             + 'for (var i = 0; i < libs.length; i++) { lib = libs[i]; '
-             + 'if (lib.hasOwnProperty("'  + libraryName + '")) {'
-             + '  return lib["' + libraryName + '"];}}})() === this ? null : this'; 
+            + 'let libs = dart_library.debuggerLibraries();'
+            + 'for (var i = 0; i < libs.length; i++) { lib = libs[i]; '
+            + 'if (lib.hasOwnProperty("' + libraryName + '")) {'
+            + '  return lib["' + libraryName + '"];}}})() === this ? null : this';
 
         var actualThis = await Dart._Evaluation._evaluate(findCurrent);
         // Guard against a null result, particularly in tests
         actualThis = actualThis && actualThis.object;
         if (actualThis) {
             // Construct something that looks like a RemoteObjectProperty
-            this.self = { name: 'this', value: actualThis};
+            this.self = { name: 'this', value: actualThis };
             this.properties.push(this.self);
         } else {
-          this._thisScope =
-            new Dart._ThisScope(null, 'empty', [], this.aliasForThis);
+            this._thisScope =
+                new Dart._ThisScope(null, 'empty', [], this.aliasForThis);
         }
     }
 
@@ -267,7 +263,8 @@ Dart._ThisScope = class _ThisScope extends Dart._Scope {
                 newProperties.push({
                     name: property.name.substring(
                         'Symbol('.length,
-                        property.name.length - 1) });
+                        property.name.length - 1)
+                });
             } else {
                 newProperties.push(property);
             }
@@ -375,30 +372,24 @@ Dart._LibraryScope = class _LibraryScope extends Dart._Scope {
     async expanded(forCompletion) {
         const lib = this.activeLibrary();
         const allLibraries = [];
-        if (lib) allLibraries.push(await this._expandThisLibrary(forCompletion));
+        if (lib) {
+            var expanded = await this._expandThisLibrary(forCompletion);
+            allLibraries.push(expanded);
+        }
         return [...allLibraries, ...await this._expandOthers(forCompletion)];
     }
 
     async _expandThisLibrary(forCompletion) {
-        if (!(this.activeLibrary())) return null;
-        const expanded = await this.expand(this.activeLibrary());
-        // For the active library, when compiling, we will get the public
-        // properties by importing it.
-        if (!forCompletion) {
-            const privateProperties = expanded.filter(
-                property => property.name.startsWith('_'));
-            return new this.constructor(
-                null,
-                this.name,
-                privateProperties,
-                this.activeLibraryName);
-        } else {
-            return new this.constructor(
-                null,
-                this.name,
-                expanded,
-                this.activeLibraryName);
-        }
+        var library = this.activeLibrary();
+        if (!library) return null;
+        const expanded = await this.expand(library);
+        // TODO(alanknight): Restore the import, deleted as a workaround for
+        // failing to import the current containing library.
+        return new this.constructor(
+            null,
+            this.name,
+            expanded,
+            this.activeLibraryName);
     }
 
     async _expandOthers(forCompletion) {
@@ -426,7 +417,7 @@ Dart._LibraryScope = class _LibraryScope extends Dart._Scope {
         return {
             name: this.name,
             properties:
-            this.properties,
+                this.properties,
             prefix: this.activeLibraryName
         };
     }
