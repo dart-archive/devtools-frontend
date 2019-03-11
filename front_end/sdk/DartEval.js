@@ -181,15 +181,15 @@ Dart._Evaluation = class {
         // get the whole list and look for one that identifies a Dart library.
         const functionNames = this.callFrame.scopeChain().map(scope => scope.name());
         for (const functionName of functionNames) {
-          if (functionName && functionName.startsWith('dart_library.library')) {
-            const name = functionName.split('.')[2];
-            // If we're in the Dart SDK, treat that as being in JS,don't have sources.
-            // TODO(alanknight): Considering evaluating as Dart when in the SDK,
-            // e.g. in dart.throw.
-            if (name == 'dart') return null;
-            this._enclosingLibraryName = name;
-            return name;
-          }
+            if (functionName && functionName.startsWith('dart_library.library')) {
+                const name = functionName.split('.')[2];
+                // If we're in the Dart SDK, treat that as being in JS,don't have sources.
+                // TODO(alanknight): Considering evaluating as Dart when in the SDK,
+                // e.g. in dart.throw.
+                if (name == 'dart') return null;
+                this._enclosingLibraryName = name;
+                return name;
+            }
         }
         // Methods have names, so using the functionName doesn't work, but
         // methods have a thisObject, which follows a similar naming convention,
