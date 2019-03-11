@@ -95,7 +95,7 @@ Dart._Scope = class _Scope {
         this.name = name || scope.name;
         // If we're being given raw properties, filter them for just fields.
         // We assume that if we're given a scope that's already been done.
-        const justFields = properties && 
+        const justFields = properties &&
             properties.filter(prop => !(prop.getter || prop.setter));
         this.properties = justFields || scope.properties;
     }
@@ -183,7 +183,7 @@ Dart._MethodScope = class _MethodScope extends Dart._Scope {
     /// @return {Dart._ThisScope}
     async thisScope(libraryName) {
         if (!this.self) {
-          await this._addThisIfMissing(libraryName);
+            await this._addThisIfMissing(libraryName);
         }
         if (this._thisScope) return this._thisScope;
 
@@ -209,21 +209,21 @@ Dart._MethodScope = class _MethodScope extends Dart._Scope {
         // return 'this'. Finding the current library is a bit painful.
         // This is very specific to the legacy module system.
         const findCurrent = '(function () {'
-             + 'let libs = dart_library.debuggerLibraries();'
-             + 'for (var i = 0; i < libs.length; i++) { lib = libs[i]; '
-             + 'if (lib.hasOwnProperty("'  + libraryName + '")) {'
-             + '  return lib["' + libraryName + '"];}}})() === this ? null : this'; 
+            + 'let libs = dart_library.debuggerLibraries();'
+            + 'for (var i = 0; i < libs.length; i++) { lib = libs[i]; '
+            + 'if (lib.hasOwnProperty("' + libraryName + '")) {'
+            + '  return lib["' + libraryName + '"];}}})() === this ? null : this';
 
         var actualThis = await Dart._Evaluation._evaluate(findCurrent);
         // Guard against a null result, particularly in tests
         actualThis = actualThis && actualThis.object;
         if (actualThis) {
             // Construct something that looks like a RemoteObjectProperty
-            this.self = { name: 'this', value: actualThis};
+            this.self = { name: 'this', value: actualThis };
             this.properties.push(this.self);
         } else {
-          this._thisScope =
-            new Dart._ThisScope(null, 'empty', [], this.aliasForThis);
+            this._thisScope =
+                new Dart._ThisScope(null, 'empty', [], this.aliasForThis);
         }
     }
 
@@ -267,7 +267,8 @@ Dart._ThisScope = class _ThisScope extends Dart._Scope {
                 newProperties.push({
                     name: property.name.substring(
                         'Symbol('.length,
-                        property.name.length - 1) });
+                        property.name.length - 1)
+                });
             } else {
                 newProperties.push(property);
             }
@@ -426,7 +427,7 @@ Dart._LibraryScope = class _LibraryScope extends Dart._Scope {
         return {
             name: this.name,
             properties:
-            this.properties,
+                this.properties,
             prefix: this.activeLibraryName
         };
     }
