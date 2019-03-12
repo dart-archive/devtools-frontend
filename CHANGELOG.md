@@ -1,5 +1,10 @@
 * Dart DevTools Changes
 
+## 0.0.4
+ * Handle variables in nested closures properly.
+ * Minor bug fixes, including going back to allowing getters in the expression,
+   as too many useful things for debugging are getters.
+
 ## 0.0.3
  * Make the console name change to Dart Console/JavaScript Console depending
    what context we think we're in.
