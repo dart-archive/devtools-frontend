@@ -17,7 +17,8 @@ Dart._Evaluation = class {
         // We can't shadow 'this' with a parameter in JS, so replace references to it
         // with a variable named THIS.
         const thisMatcher = /\bthis\b/g;
-        this.dartExpression = dartExpression.replace(thisMatcher, 'THIS');
+        // The expression may be null, e.g. it is called from Dart.environments.
+        this.dartExpression = (dartExpression || '').replace(thisMatcher, 'THIS');
         this.callFrame = callFrame;
         this._enclosingLibraryName = null;
         this.forCompletion = forCompletion;
