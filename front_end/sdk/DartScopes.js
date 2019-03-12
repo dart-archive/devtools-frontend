@@ -93,7 +93,11 @@ Dart._Scope = class _Scope {
     ///     properties in this particular scope
     constructor(scope, name, properties) {
         this.name = name || scope.name;
-        this.properties = properties || scope.properties;
+        // If we're being given raw properties, filter them for just fields.
+        // We assume that if we're given a scope that's already been done.
+        const justFields = properties &&
+            properties.filter(prop => !(prop.getter || prop.setter));
+        this.properties = justFields || scope.properties;
     }
 
     /// The property with the given name, or undefined if there is no such
