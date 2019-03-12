@@ -144,12 +144,12 @@ Dart._Scope = class _Scope {
     ///
     /// @param {SDK.RemoteObjectProperty} remoteObject
     /// @return {List<SDK.RemoteObjectProperty}
-    expand(remoteObject) {
+    async expand(remoteObject) {
         if (!remoteObject || remoteObject.name.startsWith('_')) {
             return [];
         }
-        return remoteObject.value.getAllProperties(false, false)
-            .then(result => result.properties);
+        var result = await remoteObject.value.getAllProperties(false, false);
+        return result.properties;
     }
 }
 
@@ -372,30 +372,24 @@ Dart._LibraryScope = class _LibraryScope extends Dart._Scope {
     async expanded(forCompletion) {
         const lib = this.activeLibrary();
         const allLibraries = [];
-        if (lib) allLibraries.push(await this._expandThisLibrary(forCompletion));
+        if (lib) {
+            var expanded = await this._expandThisLibrary(forCompletion);
+            allLibraries.push(expanded);
+        }
         return [...allLibraries, ...await this._expandOthers(forCompletion)];
     }
 
     async _expandThisLibrary(forCompletion) {
-        if (!(this.activeLibrary())) return null;
-        const expanded = await this.expand(this.activeLibrary());
-        // For the active library, when compiling, we will get the public
-        // properties by importing it.
-        if (!forCompletion) {
-            const privateProperties = expanded.filter(
-                property => property.name.startsWith('_'));
-            return new this.constructor(
-                null,
-                this.name,
-                privateProperties,
-                this.activeLibraryName);
-        } else {
-            return new this.constructor(
-                null,
-                this.name,
-                expanded,
-                this.activeLibraryName);
-        }
+        var library = this.activeLibrary();
+        if (!library) return null;
+        const expanded = await this.expand(library);
+        // TODO(alanknight): Restore the import, deleted as a workaround for
+        // failing to import the current containing library.
+        return new this.constructor(
+            null,
+            this.name,
+            expanded,
+            this.activeLibraryName);
     }
 
     async _expandOthers(forCompletion) {
