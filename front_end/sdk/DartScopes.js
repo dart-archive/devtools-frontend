@@ -15,14 +15,15 @@ Dart._JsScopeChain = class {
         this.libraryName = libraryName;
         this.forCompletion = forCompletion;
         this.aliasForThis = aliasForThis;
-        // The first scope will be global. We don't care about that.
-        // The second is for the method
-        // TODO(alanknight): Nested closures!!!
-        this.methodScope =
-            new Dart._MethodScope(scopeList[0], null, null, aliasForThis);
+        // The last scope will be global. We don't care about that.
+        // We assume second-last is the library, and the ones before that
+        // are methods and closures.
+        var numberOfMethods = scopeList.length - 2;
+        this.methodScopes = scopeList.slice(0, numberOfMethods).map((scope) =>
+            new Dart._MethodScope(scope, null, null, aliasForThis));
         this.libraryScope = new Dart._LibraryScope(
-            scopeList[1], null, null, this.libraryName);
-        this.thisScope = null;
+            scopeList[scopeList.length - 2], null, null, this.libraryName);
+        this.dartThisScope = null;
     }
 
     /// Convert to a scope chain that represents the variables visible under
@@ -40,16 +41,31 @@ Dart._JsScopeChain = class {
         // Should libraries with a $ suffix, (e.g. fixnum) be expanded?
 
         // Method scope.
-        this.methodScope = this.methodScope.toDartScope();
+        this.methodScopes = this.methodScopes.map(scope => scope.toDartScope());
 
-        // Add a scope for 'this' if present.
-        this.thisScope = (await this.methodScope.thisScope(this.libraryName)).toDartScope();
+        // Add a scope for [this] if present.
+        this.dartThisScope = (await this.thisScope(this.libraryName)).toDartScope();
 
         // TODO(alanknight): Is there always an active library? Can we rely on
         // having bailed out well before this if we're in a JS scope.
         const libraries = await this.libraryScope.expanded(this.forCompletion);
         return new Dart._DartScopeChain(
-            this.methodScope, this.thisScope, libraries);
+            this.methodScopes, this.dartThisScope, libraries);
+    }
+
+    /// The scope corresponding to [this].
+    /// @return {!_ThisScope}
+    async thisScope(libraryName) {
+        // We may have nested closures. Return the scope of [this] for the first
+        // one that has a valid [this], to avoid including its values more than
+        // once.
+        for (const scope of this.methodScopes) {
+            await scope._addThisIfMissing(libraryName);
+            const thisScope = await scope.thisScope(libraryName);
+            if (thisScope.isNotEmpty()) return thisScope;
+        }
+        // We didn't find a non-empty [_ThisScope]. Return the first (empty) one.
+        return this.methodScopes[0].thisScope(libraryName);
     }
 }
 
@@ -63,14 +79,14 @@ Dart._DartScopeChain = class {
     ///     libraries.
     /// @param {string} aliasForThis. Name to replace the reserved word 'this'
     ///    with in parameter lists.
-    constructor(methodScope, thisScope, libraryScopes) {
-        this.methodScope = methodScope;
+    constructor(methodScopes, thisScope, libraryScopes) {
+        this.methodScopes = methodScopes;
         this.thisScope = thisScope;
         this.libraryScopes = libraryScopes;
     }
 
     _allScopes() {
-        return [this.methodScope, this.thisScope, ...this.libraryScopes];
+        return [...this.methodScopes, this.thisScope, ...this.libraryScopes];
     }
 
     /// Convert this back to the list of objects form that Devtools expects.
@@ -178,11 +194,7 @@ Dart._MethodScope = class _MethodScope extends Dart._Scope {
     ///     in the original scopes, but we want to avoid just duplicating the library.
     /// @return {Dart._ThisScope}
     async thisScope(libraryName) {
-        if (!this.self) {
-            await this._addThisIfMissing(libraryName);
-        }
         if (this._thisScope) return this._thisScope;
-
         var properties = (await this.expand(this.self)) || [];
         this._thisScope =
             new Dart._ThisScope(null, 'this', properties, this.aliasForThis);
@@ -190,8 +202,8 @@ Dart._MethodScope = class _MethodScope extends Dart._Scope {
     }
 
     /// Fill in the 'this' scope if it wasn't in the original call.
-    /// 
-    /// If we were not given a 'this' value in the devtools scopes that might mean 
+    ///
+    /// If we were not given a 'this' value in the devtools scopes that might mean
     /// we're in a nested closure, or we might be a top-level function.
     /// Construct a 'this'. If it turns out to be null/undefined, make it empty.
     /// If it just duplicates the containing library, ignore it. Otherwise insert
@@ -201,6 +213,7 @@ Dart._MethodScope = class _MethodScope extends Dart._Scope {
     ///     in the original scopes, but we want to avoid just duplicating the library.
     /// @return {void}  Modifies this.self and this._thisScope
     async _addThisIfMissing(libraryName) {
+        if (this._thisScope || this.self) return;
         // If 'this' is the same as the current library, then return null, otherwise
         // return 'this'. Finding the current library is a bit painful.
         // This is very specific to the legacy module system.
@@ -276,6 +289,16 @@ Dart._ThisScope = class _ThisScope extends Dart._Scope {
             this.aliasForThis);
         /// Remove all remaining symbols and other things we don't want visible.
         return newScope.withoutSymbols().withoutIgnored();
+    }
+
+    /// Is this scope non-empty, i.e. there is no 'this'
+    isEmpty() {
+        return this.properties.length == 0;
+    }
+
+    /// Is this scope non-empty, i.e. there is a valid 'this'
+    isNotEmpty() {
+        return !this.isEmpty();
     }
 
     /// Return a scope based on this one without properties whose names are

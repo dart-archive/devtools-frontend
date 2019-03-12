@@ -91,7 +91,7 @@ main() async {
         ..evaluationResult = FakeRemoteObject(value: 'foo/bar/library.dart');
       var evaluation = Evaluation(callFrame, null, null, true);
       var names = await promiseToFuture(evaluation.variableNames());
-      var expected = ['x', 'foo__bar__library._lib_var'];
+      var expected = ['foo__bar__library._lib_var', 'x'];
       expect(names, equals(expected));
     });
   });
@@ -139,7 +139,7 @@ main() async {
       ChromeBindings.currentFileUrl =
           "http://localhost:8081/foo/bar/library.dart";
       var expectedContext = CompilationContext()
-        ..properties = ['x', 'foo__bar__library._lib_var']
+        ..properties = ['foo__bar__library._lib_var', 'x']
         ..module = 'foo/bar/web/main.html'
         ..currentFile = "http://localhost:8081/foo/bar/library.dart"
         ..targetName = 'app_bundle';

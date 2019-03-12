@@ -43,7 +43,7 @@ Dart._Evaluation = class {
         for (const binding of devtoolsBindings) {
             result.push(this._makeEnvironment(
                 binding.name, binding.prefix,
-                binding.properties.map(property => property.name).sort()));
+                binding.properties.map(property => property.name)));
         }
         return result;
     }
@@ -270,7 +270,7 @@ Dart._Evaluation = class {
     /// @return {List<String>}
     async variableNames() {
         const environments = await this.environments();
-        const allNames = [];
+        const allNames = new Set();
         for (const scope of environments) {
             var prefixed;
             if (scope.prefix) {
@@ -278,11 +278,14 @@ Dart._Evaluation = class {
             } else {
                 prefixed = scope.items;
             }
-            // TODO(alanknight): Handle the case of multiple variables with the
-            // same name and doing the shadowing correctly.
-            allNames.push(...prefixed);
+            // TODO(alanknight): Handle shadowing correctly.
+            for (const name of prefixed) {
+                allNames.add(name);
+            }
         }
-        return allNames;
+        // Remove duplicates, the most common case is 'this' in a nested closure.
+        const unique = [...allNames].sort();
+        return unique;
     }
 
 }
