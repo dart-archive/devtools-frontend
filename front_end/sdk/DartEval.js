@@ -279,7 +279,9 @@ Dart._Evaluation = class {
                 prefixed = scope.items;
             }
             // TODO(alanknight): Handle shadowing correctly.
-            allNames.addAll(prefixed);
+            for (const name of prefixed) {
+                allNames.add(name);
+            }
         }
         // Remove duplicates, the most common case is 'this' in a nested closure.
         const unique = [...allNames].sort();
