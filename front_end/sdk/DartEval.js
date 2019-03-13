@@ -205,13 +205,16 @@ Dart._Evaluation = class {
         // we need this is for main, in which case we can find the library name
         // from the module Id, but it's not clear, so let's be sure.
         const moduleId = await this._currentModuleId();
-        const functionName = functionNames[0];
-        const expression = 'var module = dart._loadedModules.get("' + moduleId + '"); '
+        // In tests, we get no function name for main, so try that if we have a null.
+        // TODO(alanknight): A better way of identifying the library in tests.
+        const functionName = functionNames[0] || 'main';
+        const expression = 'let dart = dart_library.debuggerLibraries()[0]["dart"];'
+            + 'module = dart._loadedModules.get("' + moduleId + '"); '
             + 'Object.keys(module).find(x => module[x]["' + functionName + '"])';
         const candidates = await this.callFrame.evaluate(
             {
                 expression: expression,
-                silent: true,
+                silent: false,
                 returnByValue: true,
                 generatePreview: false
             },

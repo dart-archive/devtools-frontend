@@ -1,5 +1,9 @@
 * Dart DevTools Changes
 
+## 0.0.5
+ * Add a heuristic to guess 'main' as the function name when we aren't getting
+   one from the scope information. This can happen in tests.
+
 ## 0.0.4
  * Handle variables in nested closures properly.
  * Minor bug fixes, including going back to allowing getters in the expression,
