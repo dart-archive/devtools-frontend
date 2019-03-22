@@ -289,7 +289,7 @@ SDK.TextSourceMap = class {
     if (laterEntry == null) {
       return earlierEntry;
     }
-    if (Math.abs(earlierEntry.lineNumber - lineNumber) 
+    if (Math.abs(earlierEntry.lineNumber - lineNumber)
         <= Math.abs(laterEntry.lineNumber - lineNumber)) {
       return earlierEntry;
     }
@@ -400,6 +400,27 @@ SDK.TextSourceMap = class {
   }
 
   /**
+   * If url contains a segment g3PathSegment, then replace
+   * everything up to and including that path segment with
+   * alternate. This lets us remap from source map URLs on
+   * the server into a different server or file system.
+   *
+   * @param {!String} url
+   * @param {!String} g3PathSegment
+   * @param {!String} alternate
+   */
+  _replaceSourceMapPathForG3(url, g3PathSegment, alternate) {
+    var index = url.indexOf(g3PathSegment);
+    // Check if the path indicator is found, or if it looks like this URL
+    // is already modified.
+    if (index > 0 && !url.startsWith(alternate)) {
+      return alternate + url.substring(index + g3PathSegment.length - 1);
+    } else {
+      return url;
+    }
+  }
+
+  /**
    * @param {!SDK.SourceMapV3} sourceMap
    */
   _parseSources(sourceMap) {
@@ -415,18 +436,8 @@ SDK.TextSourceMap = class {
       const href = sourceRoot + sourceMap.sources[i];
       let url = Common.ParsedURL.completeURL(this._baseURL, href) || href;
       if (replacePrefix && url.startsWith(replacePrefix)) {
-        var index = url.indexOf('/google3/');
-        if (index > 0) {
-          url = alternate + url.substring(index + '/google3/'.length - 1);
-        } else {
-          var index = url.indexOf('/packages/');
-          if (index > 0) {
-            var sub = url.substring(index + '/packages/'.length);
-            var parts = sub.split('/');
-            var pkg = parts[0].replace(/\./g, '/') + '/lib/';
-            url = alternate + pkg + parts.slice(1).join('/');
-          }
-        }
+        url = _replaceSourceMapPathForG3(url, '/google3/', alternate);
+        url = _replaceSourceMapPathForG3(url, '/g3-root/', alternate);
       }
       const source = sourceMap.sourcesContent && sourceMap.sourcesContent[i];
       if (url === this._compiledURL && source)
