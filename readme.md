@@ -1,4 +1,4 @@
-# Dart DevTools
+# Dart support for Chrome DevTools
 
 This is a fork of the client-side of the Chrome DevTools, including all JS & CSS to run the DevTools webapp. The original sources are at https://github.com/ChromeDevTools
 
