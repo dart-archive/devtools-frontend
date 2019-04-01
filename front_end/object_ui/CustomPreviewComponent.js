@@ -241,7 +241,12 @@ ObjectUI.CustomPreviewComponent = class {
           arguments: [],
           silent: true,
           returnByValue: false
-        });
+        }).result;
+    const resultType = typeof remoteFunctionResult;
+    // Don't bother with a link for simple types or for null.
+    if (!(["object", "function"].find(type => resultType == type)) {
+      return;
+    }
     let remoteObject = this._object.runtimeModel()
         .createRemoteObject(remoteFunctionResult.result);
     let functionDetails = (await remoteObject
