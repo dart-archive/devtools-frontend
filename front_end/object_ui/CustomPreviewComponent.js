@@ -244,25 +244,61 @@ ObjectUI.CustomPreviewComponent = class {
         });
     let remoteObject = this._object.runtimeModel()
         .createRemoteObject(remoteFunctionResult.result);
-    let functionDetails = (await remoteObject
-        .debuggerModel()
-        .functionDetailsPromise(remoteObject));
-    let functionLocation = functionDetails.location;
-    if (functionLocation === undefined) return;
+
+    // let fred = await remoteObject.getAllProperties(true /* accessorPropertiesOnly */, false /* generatePreview */)
+    // ;
+
+
+
+ // #### This is the thing that triggers a huge cascade of custom formatter operations.
+// ### Do we think it's the getAllProperties? Or something else?
+    let functionLocation = await this.functionLocationPromise(remoteObject);
+   if (functionLocation === undefined) return;
     // Manually creating a link because formatting functions such as
     // formatObjectAsFunction don't preserve the custom formatter's content.
     let typeLink = createElementWithClass('span', 'linkified devtools-link');
     typeLink.addEventListener('click',
         () => Common.Revealer.reveal(functionLocation) && false);
-    // We assume the type text exists on the header's first text node.
+//    We assume the type text exists on the header's first text node.
     for (const node of this._customPreviewSection._header.childNodes) {
       if (node.nodeType === Node.TEXT_NODE) {
         typeLink.textContent = node.textContent;
         this._customPreviewSection._header.replaceChild(typeLink, node);
         break;
       }
+   }
+  }
+
+  async functionLocationPromise(remoteObject) {
+    return remoteObject.getOwnProperties(false /* generatePreview */)
+        .then(buildDetails.bind(this));
+
+    /**
+     * @param {!SDK.GetPropertiesResult} response
+     * @return {?SDK.DebuggerModel.FunctionDetails}
+     * @this {!SDK.DebuggerModel}
+     */
+    function buildDetails(response) {
+      return undefined;
+      // if (!response)
+      //   return null;
+      // let location = null;
+      // if (response.internalProperties) {
+      //   for (const prop of response.internalProperties) {
+      //     if (prop.name === '[[FunctionLocation]]')
+      //       location = prop.value;
+      //   }
+      // }
+      // let debuggerLocation = null;
+      // if (location) {
+      //   debuggerLocation = this.createRawLocationByScriptId(
+      //       location.value.scriptId, location.value.lineNumber, location.value.columnNumber);
+      // }
+      // return location;
     }
   }
+
+
 
   expandIfPossible() {
     if ((this._object.customPreview().hasBody || this._object.customPreview().bodyGetterId) &&
