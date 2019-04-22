@@ -228,7 +228,7 @@ ObjectUI.CustomPreviewComponent = class {
 
   async createTypeLink() {
     // DDT: Creates a link from objects to their runtime type's source
-    // Wrap dart.getReifiedType in order to bind its argumetn to 'this'
+    // Wrap dart.getReifiedType in order to bind its argument to 'this'
     let remoteFunction = "function() { " +
         "return dart_library" +
         ".debuggerLibraries()[0][\"dart\"]" +
@@ -244,9 +244,23 @@ ObjectUI.CustomPreviewComponent = class {
         });
     let remoteObject = this._object.runtimeModel()
         .createRemoteObject(remoteFunctionResult.result);
+    // TODO(alanknight): Is there a better fix?
+    // Calling functionDetailsPromise or any get properties API on
+    // one of our class definitions results in many, many custom
+    // formatter calls. Work around this by temporarily disabling
+    // custom formatters while this call runs.
+    const oldSetting = Common.moduleSetting('customFormatters').get();
+    if (oldSetting) {
+        Common.moduleSetting('customFormatters').set(false);
+    }
     let functionDetails = (await remoteObject
         .debuggerModel()
-        .functionDetailsPromise(remoteObject));
+        .functionDetailsPromise(remoteObject)
+        .finally(function() {
+            if (oldSetting) {
+                Common.moduleSetting('customFormatters').set(oldSetting);
+            }
+        }));
     let functionLocation = functionDetails.location;
     if (functionLocation === undefined) return;
     // Manually creating a link because formatting functions such as
