@@ -13,7 +13,8 @@ Sources.FilteredUISourceCodeListProvider = class extends QuickOpen.FilteredListW
 
     this._queryLineNumberAndColumnNumber = '';
     this._defaultScores = null;
-    this._scorer = new Sources.FilePathScoreFunction('');
+    // DDT - Use a Dart-specific scorer.
+    this._scorer = new Sources.DartScorer('');
   }
 
   /**
@@ -106,7 +107,8 @@ Sources.FilteredUISourceCodeListProvider = class extends QuickOpen.FilteredListW
 
     if (this._query !== query) {
       this._query = query;
-      this._scorer = new Sources.FilePathScoreFunction(query);
+      // DDT - Use a Dart-specific scorer.
+      this._scorer = new Sources.DartScorer(query);
     }
 
     let multiplier = 10;
@@ -130,7 +132,8 @@ Sources.FilteredUISourceCodeListProvider = class extends QuickOpen.FilteredListW
     const uiSourceCode = this._uiSourceCodes[itemIndex];
     const fullDisplayName = uiSourceCode.fullDisplayName();
     const indexes = [];
-    new Sources.FilePathScoreFunction(query).score(fullDisplayName, indexes);
+    // DDT - Use a Dart-specific sorter that puts Dart files first.
+    new Sources.DartScorer(query).score(fullDisplayName, indexes);
     const fileNameIndex = fullDisplayName.lastIndexOf('/');
 
     titleElement.classList.add('monospace');
@@ -240,3 +243,16 @@ Sources.FilteredUISourceCodeListProvider = class extends QuickOpen.FilteredListW
     this._defaultScores = null;
   }
 };
+
+/// DDT - A Dart scorer to sort Dart source files before others.
+Sources.DartScorer = class extends Sources.FilePathScoreFunction {
+   score(data, matchIndices) {
+     var basic = super.score(data, matchIndices);
+     if (data.endsWith('.dart')) {
+       // Give .dart files a small, heuristically determined, edge.
+       return basic + 50;
+     } else {
+       return basic;
+     }
+   }
+}
